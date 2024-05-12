@@ -10,6 +10,10 @@ from werkzeug.utils import secure_filename
 import os
 import random
 import math
+import hashlib
+import magic
+
+
 # Create the Flask instance and pass the Flask 
 # constructor the path of the correct module
 
@@ -18,6 +22,10 @@ main = Blueprint('main', __name__)
 UPLOAD_FOLDER  = './project/static/photos'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 #main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
+
 
 
 file_names = list()
@@ -64,7 +72,7 @@ def profile():
 @main.route('/upload')
 @login_required
 def upload():
-  return render_template('upload.html', name=current_user.name)
+  return render_template('upload.html')
 
 @main.route('/upload', methods=['POST'])
 def upload_post():
@@ -77,13 +85,23 @@ def upload_post():
     flash('No selected file')
     return redirect(request.url)
   if file and allowed_file(file.filename):
-    filename = secure_filename(file.filename)
-    file.save(os.path.join(UPLOAD_FOLDER, filename))
+    body = file.read()
+    contenttype = magic.from_buffer(body)
+
+
+    file_hash = hashlib.sha256(body).hexdigest()
+    filename = os.path.join(UPLOAD_FOLDER,file_hash)
+
+    open(filename,'wb').write(body)
 
     image = Image(
-            user_uploaded=current_user.email,
-            location=os.path.join(UPLOAD_FOLDER, filename)
+            owner_id=current_user.id,
+            hash=file_hash,
+            length = len(body),
+            contentType = contenttype 
         )
+
+
     db.session.add(image)
     db.session.commit()
 
