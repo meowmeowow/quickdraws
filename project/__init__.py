@@ -6,11 +6,6 @@ from flask_login import LoginManager
 db = SQLAlchemy()
 
 
-class Image(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_uploaded = db.Column(db.String, nullable=False)
-    location = db.Column(db.String)
-
 
 def create_app():
     app = Flask(__name__)

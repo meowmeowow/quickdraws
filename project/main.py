@@ -3,7 +3,7 @@ from flask import Flask, render_template, request , send_from_directory,Blueprin
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from . import db
-from . import Image
+from .models import Image
 
 from werkzeug.utils import secure_filename
 
