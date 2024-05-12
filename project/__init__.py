@@ -12,6 +12,7 @@ def create_app():
 
     app.config['SECRET_KEY'] = 'secret-key-goes-here'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1000 * 1000
 
     db.init_app(app)
 

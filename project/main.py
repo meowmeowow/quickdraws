@@ -27,13 +27,14 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 
 
+if 0:
+  file_names = list()
+  for root, dirc, files in os.walk(UPLOAD_FOLDER, topdown=True):
 
-file_names = list()
-for root, dirc, files in os.walk(UPLOAD_FOLDER, topdown=True):
-
-  for FileName in files:
-    file_names.append(FileName)
-start = 0;
+    for FileName in files:
+      file_names.append(FileName)
+      
+start = 0
 
 
 
@@ -133,6 +134,8 @@ def uploaded_file(filename):
 
 @main.route("/getimage")
 def get_img():
+    file_name = ""
+  
     if (request.args.get("num") != None):
 
         start = int(request.args.get("num"))
