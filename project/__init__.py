@@ -3,8 +3,15 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
 
-# init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
+
+
+class Image(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_uploaded = db.Column(db.String, nullable=False)
+    location = db.Column(db.String)
+
+
 def create_app():
     app = Flask(__name__)
 
@@ -12,6 +19,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 
     db.init_app(app)
+
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -21,7 +29,6 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        # since the user_id is just the primary key of our user table, use it in the query for the user
         return User.query.get(int(user_id))
 
 
