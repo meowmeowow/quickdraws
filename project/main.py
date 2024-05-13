@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from . import db
 from .models import Image
+from . import models
 
 from werkzeug.utils import secure_filename
 
@@ -19,7 +20,6 @@ import magic
 
 main = Blueprint('main', __name__)
 
-UPLOAD_FOLDER  = './project/static/photos'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 #main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -45,7 +45,9 @@ def index_post():
 @main.route('/profile')
 @login_required
 def profile():
-  return render_template('profile.html', name=current_user.name)
+  images = current_user.images
+  
+  return render_template('profile.html', name=current_user.name, images=images)
 
 @main.route('/upload')
 @login_required
@@ -66,22 +68,14 @@ def upload_post():
   
   if file and allowed_file(file.filename):
     body = file.read()
-    contenttype = magic.from_buffer(body, mime=True)
 
-    file_hash = hashlib.sha256(body).hexdigest()
-    filename = os.path.join(UPLOAD_FOLDER,file_hash)
-
-    open(filename,'wb').write(body)
-
-    image = Image(
-      owner_id=current_user.id,
-      hash=file_hash,
-      length = len(body),
-      contentType = contenttype 
-      )
-
+    image = models.newImage(body)
+    image.user_id = current_user.id
+    image.name = file.filename
+    
     db.session.add(image)
     db.session.commit()
+    open(image.filename(), 'wb').write(body)
 
     flash('Uploaded!')
     return redirect(request.url)
@@ -94,28 +88,33 @@ def uploaded_file(filename):
   return send_from_directory(main.config[db.session.execute(db.select(Image).order_by(Image.location)).scalars()],
                              filename)
 
-@main.route("/getimage")
-def get_img():
-  file_name = ""
+@main.route("/getimages")
+def get_images():
+  images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
+  random.shuffle(images);
+  
+  return str(images[0].hash)
+  
+@main.route("/getimage/<num>")
+def get_img(num):
+    file_name = ""
+  
+    images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
 
-  if (request.args.get("num") != None):
-    start = int(request.args.get("num"))
+    start = int(num)
 
-    if(start < 0):
-      rem = int((abs(start)+1)%len(file_names))
-      if (rem == 0):
-        rem = len(file_names)
+    if start < 0:
+      rem = int((abs(start)+1) % len(images))
+      if rem == 0:
+        rem = len(images)
 
-      start = len(file_names)-rem
+      start = len(images)-rem
 
-    if(start >(len(file_names)-1)):
-      rem = int((abs(start)+1)%len(file_names))
-      if (rem == 0):
-        rem = len(file_names)
-      start = rem-1;
-    return str(file_names[start])
-  else:
-    random.shuffle(file_names);
-
-    return str(file_names[0])
+    if start > len(images)-1:
+      rem = int((abs(start)+1) % len(images))
+      if rem == 0:
+        rem = len(images)
+      start = rem-1
+      
+    return str(images[start].hash)
 

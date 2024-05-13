@@ -2,10 +2,6 @@
 
 {% block content %}
 
-
-
-
-
    <div>
    <span id="time"></span>
    <span id="player"class style = "display:none">
@@ -18,9 +14,6 @@
    <button class="button" id="stop" onclick="act(5)" class style = "display: none;">STOP</button>
    <button class="button" id="start" onclick="act(6)" class style = "display: inline;">START</button>
    
-
-
-
    <form method="POST" action="/">
 
    {% if current_user.is_authenticated %}
@@ -32,186 +25,156 @@
 
    </form>
 
-
-
-
-
    {% if not current_user.is_authenticated %}
    <button  class="button" id="star" onclick="act(9)" class style = "display: inline;" type = "star" value = "notstared">✧</button>
    {% endif %}
 
-
-
-
 </div>
 
-
-   <img id = "myimg" src="" alt="User Image">
+<img id="myimg" src="" alt="User Image">
 
 <script>
+  var imgap = 0;
+  var images_seen = 0;
+  var a;
+  //let time_set = (prompt("time in seconds:"))*1000;
+  let time_set = 5*1000;
 
-var imgap = 0;
-var images_seen = 0;
-var a;
-let time_set = (prompt("time in seconds:"))*1000;
+  setInterval(update_timer, 1000);
 
-setInterval(update_timer, 1000);
-
-
-
-
-   var getInitialImage = new XMLHttpRequest();
-   getInitialImage.open("GET", "/getimage");
-   getInitialImage.onreadystatechange = function (){
-   if (this.readyState == 4 && this.status == 200){
-      document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
-      }
-   }
-   getInitialImage.send();
-
-
-
-
-
-
-function act(ac){
-   //forwards
-   if (ac == 1){
-      //get if photo is starred
-
-      imgap += 1
-      images_seen++;
-            a.pause();
-         a = new timer(function() {  act(1);}, time_set);
-      var getlastimagedetails = new XMLHttpRequest();
-      getlastimagedetails.open("GET", "/getimage?num=" + imgap.toString());
-      getlastimagedetails.onreadystatechange = function (){
+  var getInitialImage = new XMLHttpRequest();
+  getInitialImage.open("GET", "/getimages");
+  getInitialImage.onreadystatechange = function (){
       if (this.readyState == 4 && this.status == 200){
-      document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
-         }
+	  loadImage(this.responseText);
+	  //document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
       }
-      getlastimagedetails.send();
+  }
+  getInitialImage.send();
 
+  function act(ac) {
+      //forwards
+      if (ac == 1){
+	  //get if photo is starred
 
-   }
-   //backwards
-   if (ac == 2){
-
-      //get if photo is starred
-
-
-      imgap += -1
-      images_seen++;
-            a.pause();
-
-         a = new timer(function() {  act(1);}, time_set);
-      var getlastimagedetails = new XMLHttpRequest();
-      getlastimagedetails.open("GET", "/getimage?num=" + imgap.toString());
-      getlastimagedetails.onreadystatechange = function (){
-      if (this.readyState == 4 && this.status == 200){
-      document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
-         }
+	  imgap += 1
+	  images_seen++;
+	  a.pause();
+	  a = new timer(function() {  act(1);}, time_set);
+	  var getlastimagedetails = new XMLHttpRequest();
+	  getlastimagedetails.open("GET", "/getimage/" + imgap.toString());
+	  getlastimagedetails.onreadystatechange = function () {
+              if (this.readyState == 4 && this.status == 200) {
+		  loadImage(this.responseText);
+		  //document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
+              }
+	  }
+	  getlastimagedetails.send();
       }
-      getlastimagedetails.send();
+    
+      //backwards
+      if (ac == 2){
+	  //get if photo is starred
+	  imgap += -1
+	  images_seen++;
+	  a.pause();
 
-   }
+	  a = new timer(function() {  act(1);}, time_set);
+	  var getlastimagedetails = new XMLHttpRequest();
+	  getlastimagedetails.open("GET", "/getimage/" + imgap.toString());
+	  getlastimagedetails.onreadystatechange = function (){
+	      if (this.readyState == 4 && this.status == 200){
+		  loadImage(this.responseText);
+		  //document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
+              }
+	  }
+	  getlastimagedetails.send();
+      }
 
-   if(ac == 3){
-      //start timer
+      if(ac == 3){
+	  //start timer
+	  a.start();
+	  document.getElementById("pause").style.display = "inline";
+	  document.getElementById("play").style.display = "none";
+      }
+      if(ac == 4){
+	  //pause timer
+	  a.pause();
+	  document.getElementById("pause").style.display = "none";
+	  document.getElementById("play").style.display = "inline";
+      }
 
-      a.start();
+      if(ac == 5){
+	  //stop
+	  a.pause();
+	  alert("session ended " + (images_seen+1)+ " image's viewed");
+	  location.reload() 
+      }
+      if(ac == 6) {
+	  //start
 
+	  document.getElementById("start").style.display = "none";
+	  document.getElementById("stop").style.display = "inline";
+	  document.getElementById("player").style.display = "inline";
 
-      document.getElementById("pause").style.display = "inline";
-      document.getElementById("play").style.display = "none";
-
-
-
-
-
-   }
-   if(ac == 4){
-      //pause timer
-      a.pause();
-      document.getElementById("pause").style.display = "none";
-      document.getElementById("play").style.display = "inline";
-
-
-   }
-
-   if(ac ==5){
-      //stop
-      a.pause();
-      alert("session ended " + (images_seen+1)+ " image's viewed");
-      location.reload() 
-
-   }
-   if(ac == 6){
-      //start
-
-      document.getElementById("start").style.display = "none";
-      document.getElementById("stop").style.display = "inline";
-      document.getElementById("player").style.display = "inline";
-
-               a = new timer(function() {  act(1);}, time_set);
-
-
-   }
-   if(ac == 7){
-      document.getElementById("unstar").style.display = "none";
-      document.getElementById("star").style.display = "inline";
-
-   }
-   if(ac == 8){
-      document.getElementById("star").style.display = "none";
-      document.getElementById("unstar").style.display = "inline";
-
-   }
-   if(ac == 9){
-      alert("You need an account to use this feature");
-   }
-}
-
-
-function timer(callback, delay) {
-    var id, started, remaining = delay, running
-
-    this.start = function() {
-        running = true
-        started = new Date()
-        id = setTimeout(callback, remaining)
-    }
-
-    this.pause = function() {
-        running = false
-        clearTimeout(id)
-        remaining -= new Date() - started
-    }
-
-    this.getTimeLeft = function() {
-        if (running) {
-            this.pause()
-            this.start()
-        }
-
-        return remaining
-    }
-
-    this.getStateRunning = function() {
-        return running
-    }
-
-    this.start()
-}
+	  a = new timer(function() {  act(1);}, time_set);
+      }
+      if(ac == 7) {
+	  document.getElementById("unstar").style.display = "none";
+	  document.getElementById("star").style.display = "inline";
+      }
+      if(ac == 8) {
+	  document.getElementById("star").style.display = "none";
+	  document.getElementById("unstar").style.display = "inline";
+      }
+      if(ac == 9) {
+	  alert("You need an account to use this feature");
+      }
+  }
 
 
+  function timer(callback, delay) {
+      var id, started, remaining = delay, running
 
-function update_timer(){
-      document.getElementById("time").innerHTML = "Time left:"+ parseInt(a.getTimeLeft()/1000);
-}
+      this.start = function() {
+          running = true
+          started = new Date()
+          id = setTimeout(callback, remaining)
+      }
 
+      this.pause = function() {
+          running = false
+          clearTimeout(id)
+          remaining -= new Date() - started
+      }
 
+      this.getTimeLeft = function() {
+          if (running) {
+              this.pause()
+              this.start()
+          }
 
+          return remaining
+      }
+
+      this.getStateRunning = function() {
+          return running
+      }
+
+      this.start()
+  }
+
+  function update_timer(){
+      if(a) {
+	  document.getElementById("time").innerHTML = "Time left:"+ parseInt(a.getTimeLeft()/1000); 
+      } else {
+	  document.getElementById("time").innerHTML = "";
+      }
+  }
+
+  function loadImage(imageid) {
+      document.getElementById("myimg").setAttribute("src", "/static/photos/" + imageid);
+  }
 
 </script>   
 

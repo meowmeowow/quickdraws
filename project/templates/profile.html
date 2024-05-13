@@ -4,4 +4,23 @@
 <h1 class="title">
   Welcome, {{ name }}!
 </h1>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Type</th>
+    <th>Created</th>
+    <th>Size</th>
+    </tr>
+{% for image in images %}
+<tr>
+    <td><img src="{{image.filename()}}" height=100></td>
+    <td>{{image.name}}</td>
+    <td>{{image.contentType}}</td>
+    <td>{{image.created}}</td>
+    <td>{{image.length}}</td>
+  </tr>
+{% endfor %}
+</table>
+
 {% endblock %}
