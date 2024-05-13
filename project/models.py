@@ -44,6 +44,8 @@ class Image(db.Model):
 
     def filename(self):
         return os.path.join(db.UPLOAD_FOLDER, self.hash)
+    def uri(self):
+        return os.path.join(db.PHOTOS_URI, self.hash)
 
     def content(self):
         return open(self.filename(), "rb").read()

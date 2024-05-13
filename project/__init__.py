@@ -4,6 +4,7 @@ from flask_login import LoginManager
 
 db = SQLAlchemy()
 db.UPLOAD_FOLDER = './project/static/photos'
+db.PHOTOS_URI = './static/photos'
 
 def create_app():
     app = Flask(__name__)

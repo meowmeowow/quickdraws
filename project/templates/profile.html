@@ -7,14 +7,15 @@
 
 <table>
   <tr>
-    <th>Name</th>
-    <th>Type</th>
-    <th>Created</th>
-    <th>Size</th>
+    <th style="width: 120px;">Image</th>
+    <th style="width: 8em;">Name</th>
+    <th style="width: 8em;">Type</th>
+    <th style="width: 10em;">Created</th>
+    <th style="width: 8em;">Size</th>
     </tr>
 {% for image in images %}
 <tr>
-    <td><img src="{{image.filename()}}" height=100></td>
+    <td><img src="{{image.uri()}}" width=100></td>
     <td>{{image.name}}</td>
     <td>{{image.contentType}}</td>
     <td>{{image.created}}</td>
