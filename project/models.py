@@ -15,6 +15,8 @@ class User(UserMixin,db.Model):
     name = db.Column(db.String(1000))
 
     images = db.relationship('Image', backref='owner', lazy=True)
+
+    playlists = db.relationship('Playlist', backref='owner', lazy=True)
     
     def __repr__(self):
         return '<User %r>' % self.name
@@ -27,7 +29,29 @@ def newUser(name, email, password):
                   name=name,
                   password=generate_password_hash(password, method='scrypt'))
   return new_user
+
+class Playlist(db.Model):
+     id = db.Column(db.Integer, primary_key=True)
+     name = db.Column(db.String(1000))
+     created = db.Column(db.DateTime,default = datetime.now)
+     user_id =  db.Column(db.Integer,db.ForeignKey('user.id'))
+
+     playlist_items = db.relationship('Playlist_Item', backref='playlist', lazy=True)
+
+class Playlist_Item(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
     
+    playlist_id =  db.Column(db.Integer,db.ForeignKey('playlist.id'))
+
+    image_id =  db.Column(db.Integer,db.ForeignKey('image.id'))
+
+    photo_num =  db.Column(db.Integer)
+
+    
+    
+    
+    
+
 class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
