@@ -1,0 +1,13 @@
+
+To activate the virtual environment:
+
+  source venv/bin/activate
+
+To start the server:
+
+  ./run
+
+To view the server:
+
+  http://35.167.74.108/
+

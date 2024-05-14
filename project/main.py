@@ -135,8 +135,8 @@ def uploaded_file(filename):
 @main.route("/getimage")
 def get_img():
     file_name = ""
-  
-    if (request.args.get("num") != None):
+    file_names = list()
+    if (request.args.get("num") != None and (len(file_names) != 0)):
 
         start = int(request.args.get("num"))
 
@@ -159,6 +159,16 @@ def get_img():
 
 
     else:
+  
+      image_list = Image.query.all()
+
+      for img in image_list:
+        file_names.append(img.hash)
+      
+
+      
+      ## add database entrys from image table to file_names list
+      
       random.shuffle(file_names);
 
       return str(file_names[0])
