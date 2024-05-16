@@ -1,10 +1,12 @@
 # import the Flask library
-from flask import Flask, render_template, request , send_from_directory,Blueprint, flash,redirect
+from flask import Flask, render_template, request , send_from_directory,Blueprint, flash,redirect, url_for
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import FlaskForm
 from . import db
 from .models import Image
 from . import models
+from .forms import PlaylistForm
 
 from werkzeug.utils import secure_filename
 
@@ -22,6 +24,10 @@ main = Blueprint('main', __name__)
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 #main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+@main.app_context_processor
+def inject_wtf():
+    return dict(wtf=FlaskForm())
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -46,8 +52,26 @@ def index_post():
 @login_required
 def profile():
   images = current_user.images
-  
-  return render_template('profile.html', name=current_user.name, images=images)
+  form = PlaylistForm()
+  if form.validate_on_submit():
+        # Handle form submission here
+        # For example, save the form data to the database
+        flash('Playlist added successfully!')
+        return redirect(url_for('main.profile'))
+  return render_template('profile.html', name=current_user.name, images=images, form=form)
+
+@main.route('/playlist')
+@login_required
+def playlist():
+  images = current_user.images
+
+  return render_template('playlist.html', name=current_user.name, images=images)
+
+
+@main.route('/constraints')
+@login_required
+def constraints():
+  return render_template('constraints.html')
 
 @main.route('/upload')
 @login_required

@@ -5,23 +5,69 @@
   Welcome, {{ name }}!
 </h1>
 
-<table>
-  <tr>
-    <th style="width: 120px;">Image</th>
-    <th style="width: 8em;">Name</th>
-    <th style="width: 8em;">Type</th>
-    <th style="width: 10em;">Created</th>
-    <th style="width: 8em;">Size</th>
-    </tr>
-{% for image in images %}
-<tr>
-    <td><img src="{{image.uri()}}" width=100></td>
-    <td>{{image.name}}</td>
-    <td>{{image.contentType}}</td>
-    <td>{{image.created}}</td>
-    <td>{{image.length}}</td>
-  </tr>
-{% endfor %}
-</table>
+<h1 class="title">
+  Playlists:
+</h1>
+<div class="albums-container container-fluid">
+<div class="row">
+  <div class="col-sm-12">
+          <div class="col-sm-4 col-lg-2">
+              <div class="thumbnail">
+                  <a href="{{ url_for('main.playlist') }}">
+                    <img src="{{ images_url }}" class="img-responsive" alt='image'>
+                  </a>
+                  <div class="caption">
+                  </div>
+              </div>
+      </div>
+  </div>
+</div>
+<div class="container-fluid">
+  <div class="row">
+      <div class="col-sm-12 col-md-7">
+          <div class="panel panel-default">
+              <div class="panel-body">
+                  <button class="new_playlist btn btn-primary" onclick="openForm()">Add a New Playlist</button>
+                  <div class="form-popup" id="myForm">
+                      <form method="POST" enctype="multipart/form-data" class="form-container" action="{{ url_for('main.profile') }}">
+                          {{ form.hidden_tag() }}
+                          <div class="form-group">
+                              {{ form.name.label }}<br>
+                              {{ form.name(size=32, class_="form-control") }}
+                          </div>
+                          <div class="form-group">
+                              {{ form.category.label }}<br>
+                              {{ form.category(size=32, class_="form-control") }}
+                          </div>
+                          <div class="form-group">
+                              {{ form.logo.label }}<br>
+                              {{ form.logo(class_="form-control") }}
+                          </div>
+                          <div class="form-group">
+                              {{ form.submit(class_="btn btn-primary") }}
+                          </div>
+                          <div class="form-group">
+                              <button type="button" class="btn btn-secondary" onclick="closeForm()">Close</button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
 
+<script>
+function openForm() {
+    console.log("openForm called");
+    document.getElementById("myForm").style.display = "block";
+}
+
+function closeForm() {
+    console.log("closeForm called");
+    document.getElementById("myForm").style.display = "none";
+}
+
+</script>
 {% endblock %}
+

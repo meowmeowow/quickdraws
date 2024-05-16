@@ -31,14 +31,28 @@
 
 </div>
 
+<div>
+    <select id='timeForm' class="button">
+      <option value="15000"> 15 seconds </option>
+      <option value="30000"> 30 seconds </option>
+      <option value="60000"> 1 minute </option>
+      <option value="120000"> 2 minutes </option>
+      <option value="180000"> 3 minutes </option>
+      <option value="300000"> 5 minutes </option>
+      <option value="420000"> 7 minutes </option>
+      <option value="600000"> 10 minutes </option>
+      <option value="900000"> 15 minutes </option>
+    </select>
+  </div>
+
+
 <img id="myimg" src="" alt="User Image">
 
 <script>
   var imgap = 0;
   var images_seen = 0;
   var a;
-  //let time_set = (prompt("time in seconds:"))*1000;
-  let time_set = 5*1000;
+  var time_set= 15000; //defaults to 15sec
 
   setInterval(update_timer, 1000);
 
@@ -51,6 +65,10 @@
       }
   }
   getInitialImage.send();
+
+  document.getElementById('timeForm').addEventListener('change', function() {
+      time_set = parseInt(this.value);
+  });
 
   function act(ac) {
       //forwards
@@ -175,6 +193,15 @@
   function loadImage(imageid) {
       document.getElementById("myimg").setAttribute("src", "/static/photos/" + imageid);
   }
+
+  window.onload = function() {
+    if (localStorage.getItem('startTimer') === 'true') {
+        localStorage.removeItem('startTimer');
+        time_set = parseInt(localStorage.getItem('timeSet'));
+        act(6);
+    }
+}
+
 
 </script>   
 
