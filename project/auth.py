@@ -1,6 +1,9 @@
 from flask import Blueprint , render_template , redirect, url_for , request, flash
 from . import db
 from . import models
+from .models import Playlist
+from .models import PlaylistItem
+
 
 from flask_login import login_user, login_required, logout_user
 
@@ -53,6 +56,19 @@ def signup_post():
     # add the new user to the database
     db.session.add(new_user)
     db.session.commit()
+
+    new_playlist = models.newPlaylist("uploaded", new_user.id)
+
+    db.session.add(new_playlist)
+    db.session.commit()
+
+    new_playlist = models.newPlaylist("starred", new_user.id)
+
+    db.session.add(new_playlist)
+    db.session.commit()
+
+
+
 
     return redirect(url_for('auth.login'))
 

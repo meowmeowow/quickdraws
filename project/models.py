@@ -1,3 +1,4 @@
+
 import os
 from . import db
 from flask_login import UserMixin
@@ -33,20 +34,29 @@ def newUser(name, email, password):
 class Playlist(db.Model):
      id = db.Column(db.Integer, primary_key=True)
      name = db.Column(db.String(1000))
-     created = db.Column(db.DateTime,default = datetime.now)
      user_id =  db.Column(db.Integer,db.ForeignKey('user.id'))
+     created = db.Column(db.DateTime,default = datetime.now)
+     #playlist_items = db.relationship('Playlist_Item', backref='playlist', lazy=True)
 
-     playlist_items = db.relationship('Playlist_Item', backref='playlist', lazy=True)
 
-class Playlist_Item(db.Model):
+def newPlaylist(namec,user_idc):
+  new_user = User(name = namec, user_id = user_idc) 
+  return new_user
+
+
+     
+class PlaylistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
     playlist_id =  db.Column(db.Integer,db.ForeignKey('playlist.id'))
 
     image_id =  db.Column(db.Integer,db.ForeignKey('image.id'))
 
-    photo_num =  db.Column(db.Integer)
+    created = db.Column(db.DateTime,default = datetime.now)
 
+def newPlaylistItem(playlist_idc,image_idc):
+  new_user = User(playlist_id = playlist_idc, image_id = image_idc)
+  return new_user
     
     
     
@@ -63,6 +73,9 @@ class Image(db.Model):
     credit = db.Column(db.String)
     contentType = db.Column(db.String)
 
+    #playlist_image = db.relationship('Playlist_Image', backref='playlist_image', lazy=True)
+
+    
     def __repr__(self):
         return '<Image %s %r %s %s>' % (self.name, self.contentType, self.filename(), self.owner)
 
@@ -87,3 +100,4 @@ def newImage(body):
     return image
     
         
+

@@ -16,8 +16,13 @@
    
    <form method="POST" action="/">
 
-   {% if current_user.is_authenticated %}
-   <button  class="button" id="unstar" onclick="act(7)" class style = "display: none;" type = "star" value = "stared">✦</button>
+
+
+     {% if current_user.is_authenticated %}
+
+     
+
+     <button  class="button" id="unstar" onclick="act(7)" class style = "display: none;" type = "star" value = "stared">✦</button>
 
    <button  class="button" id="star" onclick="act(8)" class style = "display: inline;"type = "star" value = "notstared">✧</button>
 
