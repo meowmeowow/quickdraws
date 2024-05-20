@@ -21,17 +21,18 @@
      {% if current_user.is_authenticated %}
 
      
-
-     <button  class="button" id="unstar" onclick="act(7)" class style = "display: none;" type = "star" value = "stared">✦</button>
-
-   <button  class="button" id="star" onclick="act(8)" class style = "display: inline;"type = "star" value = "notstared">✧</button>
-
+     {% if starShowing%}
+     <button  class="button" id="unstar" class style = "display: inline;" type = "star" value = "stared">✦</button>
+     {% endif %}
+          {% if not starShowing%}
+   <button  class="button" id="star" class style = "display: inline;"type = "star" value = "notstared">✧</button>
+      {% endif %}
    {% endif %}
 
    </form>
 
    {% if not current_user.is_authenticated %}
-   <button  class="button" id="star" onclick="act(9)" class style = "display: inline;" type = "star" value = "notstared">✧</button>
+   <button  class="button" id="star" onclick="act(7)" class style = "display: inline;" type = "star" value = "notstared">✧</button>
    {% endif %}
 
 </div>
@@ -80,7 +81,7 @@
       if (ac == 1){
 	  //get if photo is starred
 
-	  imgap += 1
+	  imgap += 1;
 	  images_seen++;
 	  a.pause();
 	  a = new timer(function() {  act(1);}, time_set);
@@ -98,7 +99,7 @@
       //backwards
       if (ac == 2){
 	  //get if photo is starred
-	  imgap += -1
+	  imgap += -1;
 	  images_seen++;
 	  a.pause();
 
@@ -143,14 +144,6 @@
 	  a = new timer(function() {  act(1);}, time_set);
       }
       if(ac == 7) {
-	  document.getElementById("unstar").style.display = "none";
-	  document.getElementById("star").style.display = "inline";
-      }
-      if(ac == 8) {
-	  document.getElementById("star").style.display = "none";
-	  document.getElementById("unstar").style.display = "inline";
-      }
-      if(ac == 9) {
 	  alert("You need an account to use this feature");
       }
   }

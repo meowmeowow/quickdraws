@@ -33,15 +33,16 @@ def newUser(name, email, password):
 
 class Playlist(db.Model):
      id = db.Column(db.Integer, primary_key=True)
+
      name = db.Column(db.String(1000))
      user_id =  db.Column(db.Integer,db.ForeignKey('user.id'))
      created = db.Column(db.DateTime,default = datetime.now)
-     #playlist_items = db.relationship('Playlist_Item', backref='playlist', lazy=True)
+     playlistitems = db.relationship('PlaylistItem', backref='playlist', lazy=True)
 
 
-def newPlaylist(namec,user_idc):
-  new_user = User(name = namec, user_id = user_idc) 
-  return new_user
+def newPlaylist(name,user_id):
+  playlist = Playlist(name = name, user_id = user_id) 
+  return playlist
 
 
      
@@ -54,9 +55,9 @@ class PlaylistItem(db.Model):
 
     created = db.Column(db.DateTime,default = datetime.now)
 
-def newPlaylistItem(playlist_idc,image_idc):
-  new_user = User(playlist_id = playlist_idc, image_id = image_idc)
-  return new_user
+def newPlaylistItem(playlist_id,image_id):
+  playlistitem = PlaylistItem(playlist_id = playlist_id, image_id = image_id)
+  return playlistitem
     
     
     

@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request , send_from_directory,Blueprint, flash,redirect, url_for
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import FlaskForm
+from flask_wtf import Form
 from . import db
 from .models import Image
 from .models import Playlist
@@ -10,8 +10,6 @@ from .models import PlaylistItem
 from . import models
 from .forms import PlaylistForm
 
-
-from sqlalchemy import select
 
 from werkzeug.utils import secure_filename
 
@@ -31,14 +29,14 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 #main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-images = 0
+images = list()
 start = 0
 star_bool = False
 
 
 @main.app_context_processor
 def inject_wtf():
-    return dict(wtf=FlaskForm())
+    return dict(wtf=Form())
 
 
 def allowed_file(filename):
@@ -47,16 +45,15 @@ def allowed_file(filename):
 
 @main.route('/')
 def index():
-  return render_template('index.html')
+  return render_template('index.html',starShowing = star_bool)
 
 @main.route('/',methods=['POST'])
 def index_post():
   if request.form.get('star') == 'notstared':
-    db.session.execute(db.delete(PlaylistItem).where(PlaylistItem.c.image_id == images[start].id).where(PlaylistItem.c.playlist_id.c.user_id == current_user.id))
+    db.session.execute(db.delete(PlaylistItem).where(PlaylistItem.image_id == images[start].id).where((db.select(Playlist).where(Playlist.c.id == PlaylistItem.playlist_id)).user_id == current_user.id))
   elif request.form.get('star') == 'stared':
-    playlist_item = models.newPlaylistItem((db.session.execute(db.select(Playlist).where(Playlist.c.name == "starred").where(Playlist.c.user_id == current_user.id))).id,images[start].id)
-    #playlist_item.playlist_id = (db.session.execute(db.select(Playlist).where(Playlist.c.name == "starred").where(Playlist.c.user_id == current_user.id))).id
-    #playlist_item.image_id = images[start].id
+    playlist_item = models.newPlaylistItem((db.session.execute(db.select(Playlist).where(Playlist.c.name == "starred").where(Playlist.user_id == current_user.id))),images[start].id) 
+
   else:
     pass # unknown
 
@@ -117,7 +114,7 @@ def upload_post():
 
 
 
-    playlist_item = models.newPlaylistItem((db.session.execute(db.select(Playlist).where(Playlist.c.name == "uploaded").where(Playlist.c.user_id == current_user.id))).id.images[start].id)
+    playlist_item = models.newPlaylistItem((db.session.execute(db.select(Playlist).where(Playlist.name == "uploaded").where(Playlist.user_id == current_user.id))),image.id)
                        
     flash('Uploaded!')
     return redirect(request.url)
@@ -127,13 +124,27 @@ def upload_post():
 
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
-  return send_from_directory(main.config[db.session.execute(db.select(PlaylistItem).where((PlaylistItem.c.playlist_id.c.name) == "uploaded").where((PlaylistItem.c.playlist_id.c.user_id) == current_user.id).order_by(Image.created)).scalars()],filename)
+  return send_from_directory(main.config[db.session.execute(db.select(PlaylistItem).where((PlaylistItem.playlist_id.name) == "uploaded").where((PlaylistItem.playlist_id.user_id) == current_user.id).order_by(Image.created)).scalars()],filename) 
 
 @main.route("/getimages")
 def get_images():
-  #add star bool thing here too
+  
+  global star_bool
+  global images
   images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
   random.shuffle(images);
+
+
+
+  #star_bool = bool(db.session.execute(PlaylistItem.query.filter_by(PlaylistItem.image_id = images[start].id).filter_by(PlaylistItem.playlist_id.id == Playlist.name == "starred").filter_by(Playlist.user_id == current_user.id)).first())
+
+  #filter if image is in table
+  #filter if in a playlist that the user has starred
+
+  possible = list(db.session.execute(db.select(Playlist).where((Playlist.user_id) == current_user.id).where((Playlist.name) == "starred")).scalars())
+  if(possible != 0):
+    star_bool = bool(db.session.execute(PlaylistItem.query.filter_by(image_id = images[start].id, playlist_id = possible[0].id)).first())
+
   
   return str(images[0].hash)
   
@@ -145,24 +156,29 @@ def get_img(num):
     global start
     global star_bool
     
-    images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
-
+    
     start = int(num)
 
+    
     if start < 0:
       rem = int((abs(start)+1) % len(images))
       if rem == 0:
         rem = len(images)
 
       start = len(images)-rem
-
+    
     if start > len(images)-1:
       rem = int((abs(start)+1) % len(images))
       if rem == 0:
         rem = len(images)
-      start = rem-1
+      
+      start = rem-1      
 
-    #star_bool = bool(db.session.execute(select(PlaylistItem).session.query.filter_by(image_id = images[start].id).filter_by(select(Playlist).where(Playlist.c.name == "starred").where(Playlist.c.user_id == current_user.id))).first())
-    #display star correctly -> pass to html
+    possible = list(db.session.execute(db.select(Playlist).where((Playlist.user_id) == current_user.id).where((Playlist.name) == "starred")).scalars())
+    if(possible != 0):
+      star_bool = bool(db.session.execute(PlaylistItem.query.filter_by(image_id = images[start].id, playlist_id = possible[0].id)).first())
+
+
+
     return str(images[start].hash)
 
