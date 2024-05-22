@@ -1,21 +1,21 @@
-{% extends "base.html" %}
+  {% extends "base.html" %}
 
-{% block content %}
+  {% block content %}
 
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-    <div class="notification is-danger">
-        {{ messages[0] }}
-    </div>
-{% endif %}
+  {% with messages = get_flashed_messages() %}
+  {% if messages %}
+      <div class="notification is-danger">
+          {{ messages[0] }}
+      </div>
+  {% endif %}
 
 
-{% endwith %}
+  {% endwith %}
 
-<form method = post enctype=multipart/form-data>
-  <label for="img">Select image:</label>
-  <input type="file" id="img" name="file" accept="image/*" >
-  <input type="submit" value="upload">
-</form>
+  <form method = post enctype=multipart/form-data>
+    <label for="files">Select image(s) or zip file(s):</label>
+    <input type="file" id="files" name="files" accept="image/*,.zip" multiple>  
+    <input type="submit" value="upload">
+  </form>
 
-{% endblock %}
+  {% endblock %}

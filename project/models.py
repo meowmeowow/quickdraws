@@ -65,12 +65,11 @@ def newPlaylistItem(playlist_id,image_id):
 
 class Image(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer,db.ForeignKey('user.id'))
-
-    name = db.Column(db.String)
-    hash = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String, nullable=False)
+    hash = db.Column(db.String, nullable=False, unique=True)
     length = db.Column(db.Integer)
-    created = db.Column(db.DateTime,default = datetime.now)
+    created = db.Column(db.DateTime, default=datetime.now)
     credit = db.Column(db.String)
     contentType = db.Column(db.String)
 
