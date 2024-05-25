@@ -56,15 +56,13 @@ def index():
 @main.route('/profile')
 @login_required
 def profile():
-  images = current_user.images
-  form = PlaylistForm()
-  if form.validate_on_submit():
-        # Handle form submission here
-        # For example, save the form data to the database
-        #for each image call in models add to playlist
-        flash('Playlist added successfully!')
-        return redirect(url_for('main.profile'))
-    return render_template('profile.html', name=current_user.name, images=images, form=form)
+    #images = current_user.images
+    #form = PlaylistForm()
+    #if form.validate_on_submit():
+    #    flash('Playlist added successfully!')
+    #    return redirect(url_for('main.profile'))
+    #return render_template('profile.html', name=current_user.name, images=images, form=form)
+    return render_template('index.html')
 
 @main.route('/playlist/<playlistName>')
 @login_required
@@ -205,8 +203,8 @@ def get_img(num):
     if not session.images: get_images()
         
     images = session.images
+    print(len(images))
     start = int(num)
->>>>>>> 7b707eb (restructure code/ partially working, gets images, initial image not working)
     if start < 0:
         rem = int((abs(start) + 1) % len(images))
         if rem == 0:
