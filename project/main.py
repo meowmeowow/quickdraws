@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request , send_from_directory,Blueprint, flash,redirect, url_for
 
+# imporOAAAt the Flask library
+from flask import Flask, render_template, request , send_from_directory,Blueprint, flash,redirect, url_for
+#import session
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import Form
@@ -8,9 +10,7 @@ from .models import Image, Playlist, PlaylistItem
 from . import models
 from .forms import PlaylistForm
 from flask import current_app as app
-
 from werkzeug.utils import secure_filename
-
 import os
 import random
 import math
@@ -18,7 +18,6 @@ import hashlib
 import magic
 import zipfile
 from datetime import datetime
-
 import json
 import requests
 # Create the Flask instance and pass the Flask 
@@ -156,6 +155,35 @@ def upload_post():
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(main.config['UPLOAD_FOLDER'], filename)
+
+
+@main.route("/playlist/<playlistname>/<num>", methods=['GET'])
+def is_member_of_playlist(playlistname,num):
+    #get image by the hash and call starred function with user id?
+    
+    session = getSession(current_user.id)
+    img = session.images[num]
+    result = img.isInPlaylist(current_user.id,playlistname)
+    return(result)
+
+@main.route("/playlist/<playlistname>/<num>", methods=['PUT'])
+def add_to_playlist(playlistname,num):
+    #handle request -> create new entry in playlistitem table
+
+    session = getSession(current_user.id)
+    img = session.images[num]
+    img.setInPlaylist(current_user.id,playlistname)
+    return redirect('/playlist/<playlistname>')
+
+@main.route("/playlist/<playlistname>/<num>", methods=['DELETE'])
+def delete_from_playlist(playlistname,num):
+    #handle request -> delete playlistitem table
+    #javascript -> make calls
+    
+    session = getSession(current_user.id)
+    img = session.images[num]
+    img.deleteInPlaylist(current_user.id,playlistname)
+    return redirect('/playlist/<playlistname>')
 
 
 @main.route("/playlist/<playlistname>/<num>", methods=['GET'])
