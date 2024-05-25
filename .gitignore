@@ -13,4 +13,7 @@ dist/
 __pycache__/
 *.so
 *~
+*.sqlite
+
+
 
