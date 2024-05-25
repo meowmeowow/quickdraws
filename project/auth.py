@@ -1,4 +1,4 @@
-from flask import Blueprint , render_template , redirect, url_for , request, flash
+from flask import Blueprint , render_template , redirect, url_for , request, flash, session
 from . import db
 from . import models
 from .models import Playlist
@@ -23,6 +23,8 @@ def login_post():
 
     user = models.User.query.filter_by(email=email).first()
 
+
+    
     # check if the user actually exists
     # take the user-supplied password, hash it, and compare it to the hashed password in the database
     if not user or not user.check_password(password):
@@ -31,6 +33,7 @@ def login_post():
 
     login_user(user, remember=remember)
 
+        
     return redirect(url_for('main.profile'))
 
 @auth.route('/signup')

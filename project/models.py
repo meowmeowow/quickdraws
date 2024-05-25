@@ -1,4 +1,3 @@
-
 import os
 from . import db
 from flask_login import UserMixin
@@ -34,7 +33,7 @@ def newUser(name, email, password):
 class Playlist(db.Model):
      id = db.Column(db.Integer, primary_key=True)
 
-     name = db.Column(db.String(1000))
+     name = db.Column(db.String(1000))# make name+user unique, user can only have 1 playlist of each name
      user_id =  db.Column(db.Integer,db.ForeignKey('user.id'))
      created = db.Column(db.DateTime,default = datetime.now)
      playlistitems = db.relationship('PlaylistItem', backref='playlist', lazy=True)
@@ -86,6 +85,29 @@ class Image(db.Model):
 
     def content(self):
         return open(self.filename(), "rb").read()
+
+    def setInPlaylist(self, user_id, playlistname):
+        playlist_item = newPlaylistItem(list(db.select(Playlist).where(Playlist.name == playlistname).where(Playlist.user_id == user_id)).scalars()[0].id,images[self.id])
+        db.session.add(playlist_item)
+        db.session.commit()
+
+
+    def deleteInPlaylist(self,user, playlistname):
+       playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+       if not playlist: return
+       db.session.execute(db.delete(db.select(PlaylistItem).where(PlaylistItem.image_id == self.id).where((db.select(Playlist).where(Playlist.id == playlist.id)))).first())
+       db.session.commit()
+
+    def isInPlaylist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+        if playlist:
+            playlist_item = PlaylistItem.query.filter_by(image_id = self.id).filter_by(playlist_id =playlist.id).first()
+
+            return playlist_item is not None
+        else:
+            return False
+        
+        
         
 def newImage(body):
     contenttype = magic.from_buffer(body, mime=True)
