@@ -11,3 +11,9 @@ To view the server:
 
   http://35.167.74.108/
 
+
+To install a new python package:
+
+  pip3 install requests
+  echo requests >> requirements
+

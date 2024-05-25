@@ -10,7 +10,7 @@
       <a href="javascript:act(3)" id="play" class style = "display: none;">O</a>
       <a href="javascript:act(1)" id="next">></a>
    </span>
-
+/
    <button class="button" id="stop" onclick="act(5)" class style = "display: none;">STOP</button>
    <button class="button" id="start" onclick="act(6)" class style = "display: inline;">START</button>
    
@@ -21,18 +21,15 @@
      {% if current_user.is_authenticated %}
 
      
-     {% if starShowing%}
-     <button  class="button" id="unstar" class style = "display: inline;" type = "star" value = "stared">✦</button>
-     {% endif %}
-          {% if not starShowing%}
-   <button  class="button" id="star" class style = "display: inline;"type = "star" value = "notstared">✧</button>
-      {% endif %}
+     <button  class="button" id="unstar" onclick='act(7)' class style = "display: none;" name = "star" value = "stared">✦</button>
+
+     <button  class="button" id="star" onclick='act(8)' class style = "display: inline;"name = "star" value = "notstared">✧</button>
    {% endif %}
 
    </form>
 
    {% if not current_user.is_authenticated %}
-   <button  class="button" id="star" onclick="act(7)" class style = "display: inline;" type = "star" value = "notstared">✧</button>
+   <button  class="button" id="star" onclick="act(9)" class style = "display: inline;" name = "star" value = "notstared">✧</button>
    {% endif %}
 
 </div>
@@ -57,20 +54,10 @@
 <script>
   var imgap = 0;
   var images_seen = 0;
-  var a;
+  var a = null;
   var time_set= 15000; //defaults to 15sec
 
   setInterval(update_timer, 1000);
-
-  var getInitialImage = new XMLHttpRequest();
-  getInitialImage.open("GET", "/getimages");
-  getInitialImage.onreadystatechange = function (){
-      if (this.readyState == 4 && this.status == 200){
-	  loadImage(this.responseText);
-	  //document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
-      }
-  }
-  getInitialImage.send();
 
   document.getElementById('timeForm').addEventListener('change', function() {
       time_set = parseInt(this.value);
@@ -83,36 +70,21 @@
 
 	  imgap += 1;
 	  images_seen++;
-	  a.pause();
+	  if(a) a.pause();
 	  a = new timer(function() {  act(1);}, time_set);
-	  var getlastimagedetails = new XMLHttpRequest();
-	  getlastimagedetails.open("GET", "/getimage/" + imgap.toString());
-	  getlastimagedetails.onreadystatechange = function () {
-              if (this.readyState == 4 && this.status == 200) {
-		  loadImage(this.responseText);
-		  //document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
-              }
-	  }
-	  getlastimagedetails.send();
+	  loadImage(imgap);
       }
     
       //backwards
       if (ac == 2){
+	  //combine with code above
 	  //get if photo is starred
 	  imgap += -1;
 	  images_seen++;
-	  a.pause();
+	  if(a) a.pause();
 
 	  a = new timer(function() {  act(1);}, time_set);
-	  var getlastimagedetails = new XMLHttpRequest();
-	  getlastimagedetails.open("GET", "/getimage/" + imgap.toString());
-	  getlastimagedetails.onreadystatechange = function (){
-	      if (this.readyState == 4 && this.status == 200){
-		  loadImage(this.responseText);
-		  //document.getElementById("myimg").setAttribute("src", "/static/photos/" + this.responseText);
-              }
-	  }
-	  getlastimagedetails.send();
+	  loadImage(imgap);
       }
 
       if(ac == 3){
@@ -143,11 +115,43 @@
 
 	  a = new timer(function() {  act(1);}, time_set);
       }
-      if(ac == 7) {
+      if(ac == 7){
+        //unstar
+          var starDetails = new XMLHttpRequest();
+          starDetails.open("DELETE", "/playlist/starred/" + imgap.toString());
+	  starDetails.onreadystatechange = function (){
+              if (this.readyState == 4 && this.status == 200){
+		  starChange(False)
+              }
+          }
+          starDetails.send();
+      }
+      if(ac == 8){
+          //star
+          var starDetails = new XMLHttpRequest();
+          starDetails.open("SET", "/playlist/starred/" + imgap.toString());
+	  starDetails.onreadystatechange = function (){
+              if (this.readyState == 4 && this.status == 200){
+		  starChange(true)
+              }
+          }
+          starDetails.send();
+      }
+      if(ac == 9) {
 	  alert("You need an account to use this feature");
       }
   }
 
+  function starChange(starValue){
+    if(starValue == true){
+        document.getElementById("star").style.display = "none"();
+        document.getElementById("unstar").style.display = "inline"();
+    }else{
+        document.getElementById("star").style.display = "inline"();
+        document.getElementById("unstar").style.display = "none"();
+
+    }
+  }
 
   function timer(callback, delay) {
       var id, started, remaining = delay, running
@@ -182,27 +186,37 @@
 
   function update_timer(){
       if(a) {
-	  document.getElementById("time").innerHTML = "Time left:"+ parseInt(a.getTimeLeft()/1000); 
+	  $("#time").html("Time left:"+ parseInt(a.getTimeLeft()/1000)); 
       } else {
-	  document.getElementById("time").innerHTML = "";
+	  $("#time").html("");
       }
   }
 
-  function loadImage(imageid) {
-      document.getElementById("myimg").setAttribute("src", "/static/photos/" + imageid);
+  function loadImage(imageNum) {
+      $.getJSON("/image/get/" + imageNum.toString(), function(result, status) {
+          setImage(result);
+      });
   }
 
-  window.onload = function() {
+function setImage(imagedef) {
+    $("#myimg").attr("src", "/static/photos/" + imagedef.hash);
+    starChange(imagedef.star);
+}
+
+$( document ).ready(function() {
     if (localStorage.getItem('startTimer') === 'true') {
         localStorage.removeItem('startTimer');
         time_set = parseInt(localStorage.getItem('timeSet'));
-        act(6);
+        //act(6);
     }
-}
-
+    $.getJSON("/getimages", function(result, status) {
+	act(1);
+    });
+  });
 
 </script>   
 
 
 
 {% endblock %}
+

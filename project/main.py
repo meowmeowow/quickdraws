@@ -1,5 +1,5 @@
-# import the Flask library
-from flask import Flask, render_template, request, send_from_directory, Blueprint, flash, redirect, url_for
+from flask import Flask, render_template, request , send_from_directory,Blueprint, flash,redirect, url_for
+
 from flask_login import login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import Form
@@ -7,6 +7,7 @@ from . import db
 from .models import Image, Playlist, PlaylistItem
 from . import models
 from .forms import PlaylistForm
+from flask import current_app as app
 
 from werkzeug.utils import secure_filename
 
@@ -18,15 +19,28 @@ import magic
 import zipfile
 from datetime import datetime
 
-# Create the Flask Blueprint instance
+import json
+import requests
+# Create the Flask instance and pass the Flask 
+# constructor the path of the correct module
+
 main = Blueprint('main', __name__)
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'zip'])
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+#main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Global variables
-images = list()
-start = 0
-star_bool = False
+class Session:
+    def __init__(self, user_id):
+        self.user_id = user_id
+        self.images = None
+
+userSession = {}
+def getSession(user_id):
+    session = userSession.get(user_id)
+    if session is None:
+        session = Session(user_id)
+        userSession[user_id] = session
+    return session
 
 @main.app_context_processor
 def inject_wtf():
@@ -37,35 +51,27 @@ def allowed_file(filename):
 
 @main.route('/')
 def index():
-    return render_template('index.html', starShowing=star_bool)
-
-@main.route('/', methods=['POST'])
-def index_post():
-    if request.form.get('star') == 'notstared':
-        db.session.execute(db.delete(PlaylistItem).where(PlaylistItem.image_id == images[start].id).where(
-            (db.select(Playlist).where(Playlist.c.id == PlaylistItem.playlist_id)).user_id == current_user.id))
-    elif request.form.get('star') == 'stared':
-        playlist_item = models.newPlaylistItem(
-            (db.session.execute(db.select(Playlist).where(Playlist.c.name == "starred").where(Playlist.user_id == current_user.id))), images[start].id)
-    else:
-        pass  # unknown
-    return ('', 204)
+    return render_template('index.html')
 
 @main.route('/profile')
 @login_required
 def profile():
-    images = current_user.images
-    form = PlaylistForm()
-    if form.validate_on_submit():
-        flash('Playlist added successfully!')
-        return redirect(url_for('main.profile'))
-    return render_template('profile.html', name=current_user.name, images=images, form=form)
+    #images = current_user.images
+    #form = PlaylistForm()
+    #if form.validate_on_submit():
+    #    flash('Playlist added successfully!')
+    #    return redirect(url_for('main.profile'))
+    #return render_template('profile.html', name=current_user.name, images=images, form=form)
+    return render_template('index.html')
 
-@main.route('/playlist')
+@main.route('/playlist/<playlistName>')
 @login_required
-def playlist():
-    images = current_user.images
-    return render_template('playlist.html', name=current_user.name, images=images)
+def playlist(playlistName):
+    #fix
+    #images = current_user.images
+
+    #return render_template('playlist.html', name=current_user.name, images=images)
+    return render_template('index.html')
 
 @main.route('/constraints')
 @login_required
@@ -120,32 +126,85 @@ def upload_post():
         flash(f"Database error: {str(e)}")
 
     return redirect(request.url)
+'''  
+  file = request.files['file']
+  
+  if file.filename == '':
+    flash('No selected file')
+    return redirect(request.url)
+  
+  if file and allowed_file(file.filename):
+    body = file.read()
 
+    image = models.newImage(body)
+    image.user_id = current_user.id
+    image.name = file.filename
+    
+    db.session.add(image)
+    db.session.commit()
+    open(image.filename(), 'wb').write(body)
+
+    image.models.setInPlaylist(current_user.id,"uploaded")
+
+    
+    flash('Uploaded!')
+    return redirect(request.url)
+  
+  flash('Please try again, there was a problem')
+  return redirect(request.url)
+'''
 @main.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(main.config['UPLOAD_FOLDER'], filename)
 
+
+@main.route("/playlist/<playlistname>/<num>", methods=['GET'])
+def is_member_of_playlist(playlistname,num):
+    #get image by the hash and call starred function with user id?
+    
+    session = getSession(current_user.id)
+    img = session.images[num]
+    result = img.isInPlaylist(current_user.id,playlistname)
+    return(result)
+
+@main.route("/playlist/<playlistname>/<num>", methods=['PUT'])
+def add_to_playlist(playlistname,num):
+    #handle request -> create new entry in playlistitem table
+
+    session = getSession(current_user.id)
+    img = session.images[num]
+    img.setInPlaylist(current_user.id,playlistname)
+    return redirect('/playlist/<playlistname>')
+
+@main.route("/playlist/<playlistname>/<num>", methods=['DELETE'])
+def delete_from_playlist(playlistname,num):
+    #handle request -> delete playlistitem table
+    #javascript -> make calls
+    
+    session = getSession(current_user.id)
+    img = session.images[num]
+    img.deleteInPlaylist(current_user.id,playlistname)
+    return redirect('/playlist/<playlistname>')
+
 @main.route("/getimages")
 def get_images():
-    global star_bool
-    global images
-    images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
-    random.shuffle(images)
+  #initalize images list, edit when faced with constrants
+  session = getSession(current_user.id)
+  session.images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
+  random.shuffle(session.images)
 
-    possible = list(db.session.execute(db.select(Playlist).where((Playlist.user_id) == current_user.id).where((Playlist.name) == "starred")).scalars())
-    if possible:
-        star_bool = bool(db.session.execute(PlaylistItem.query.filter_by(image_id=images[start].id, playlist_id=possible[0].id)).first())
+  return ""
 
-    return str(images[0].hash)
-
-@main.route("/getimage/<num>")
+@main.route("/image/get/<num>")
 def get_img(num):
-    global images
-    global start
-    global star_bool
+    file_name = ""
 
+    session = getSession(current_user.id)
+    if not session.images: get_images()
+        
+    images = session.images
+    print(len(images))
     start = int(num)
-
     if start < 0:
         rem = int((abs(start) + 1) % len(images))
         if rem == 0:
@@ -157,10 +216,11 @@ def get_img(num):
         if rem == 0:
             rem = len(images)
         start = rem - 1
+    img = images[start]
+    imginfo = {}
+    imginfo['hash'] = str(img.hash)
+    imginfo['star'] = img.isInPlaylist(current_user.id, "starred")
+    imginfo = json.dumps(imginfo)
 
-    possible = list(db.session.execute(db.select(Playlist).where((Playlist.user_id) == current_user.id).where((Playlist.name) == "starred")).scalars())
-    if possible:
-        star_bool = bool(db.session.execute(PlaylistItem.query.filter_by(image_id=images[start].id, playlist_id=possible[0].id)).first())
-
-    return str(images[start].hash)
+    return imginfo
 
