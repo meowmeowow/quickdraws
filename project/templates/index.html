@@ -10,11 +10,10 @@
       <a href="javascript:act(3)" id="play" class style = "display: none;">O</a>
       <a href="javascript:act(1)" id="next">></a>
    </span>
-/
+
    <button class="button" id="stop" onclick="act(5)" class style = "display: none;">STOP</button>
    <button class="button" id="start" onclick="act(6)" class style = "display: inline;">START</button>
    
-   <form method="POST" action="/">
 
 
 
@@ -26,7 +25,6 @@
      <button  class="button" id="star" onclick='act(8)' class style = "display: inline;"name = "star" value = "notstared">✧</button>
    {% endif %}
 
-   </form>
 
    {% if not current_user.is_authenticated %}
    <button  class="button" id="star" onclick="act(9)" class style = "display: inline;" name = "star" value = "notstared">✧</button>
@@ -63,92 +61,94 @@
       time_set = parseInt(this.value);
   });
 
+  function newImage(imgap){
+    images_seen++;
+    a = new timer(function() {  act(1);}, time_set);
+	  if(a) a.pause();
+	  loadImage(imgap);
+
+  }
   function act(ac) {
-      //forwards
       if (ac == 1){
-	  //get if photo is starred
-
-	  imgap += 1;
-	  images_seen++;
-	  if(a) a.pause();
-	  a = new timer(function() {  act(1);}, time_set);
-	  loadImage(imgap);
+        //forwards
+	      imgap += 1;
+        newImage(imgap)
+        displayStar(imgap)
       }
-    
-      //backwards
       if (ac == 2){
-	  //combine with code above
-	  //get if photo is starred
-	  imgap += -1;
-	  images_seen++;
-	  if(a) a.pause();
-
-	  a = new timer(function() {  act(1);}, time_set);
-	  loadImage(imgap);
+        //backwards
+	      imgap += -1;
+        newImage(imgap)
+        displayStar(imgap)
       }
 
       if(ac == 3){
 	  //start timer
-	  a.start();
-	  document.getElementById("pause").style.display = "inline";
-	  document.getElementById("play").style.display = "none";
+        a.start();
+        document.getElementById("pause").style.display = "inline";
+        document.getElementById("play").style.display = "none";
       }
       if(ac == 4){
 	  //pause timer
-	  a.pause();
-	  document.getElementById("pause").style.display = "none";
-	  document.getElementById("play").style.display = "inline";
+        a.pause();
+        document.getElementById("pause").style.display = "none";
+        document.getElementById("play").style.display = "inline";
       }
-
       if(ac == 5){
-	  //stop
-	  a.pause();
-	  alert("session ended " + (images_seen+1)+ " image's viewed");
-	  location.reload() 
+        //stop
+        a.pause();
+        alert("session ended " + (images_seen+1)+ " image's viewed");
+        location.reload() 
       }
       if(ac == 6) {
-	  //start
+        //start
 
-	  document.getElementById("start").style.display = "none";
-	  document.getElementById("stop").style.display = "inline";
-	  document.getElementById("player").style.display = "inline";
+        document.getElementById("start").style.display = "none";
+        document.getElementById("stop").style.display = "inline";
+        document.getElementById("player").style.display = "inline";
 
-	  a = new timer(function() {  act(1);}, time_set);
+        a = new timer(function() {  act(1);}, time_set);
       }
       if(ac == 7){
-        //unstar
-          var starDetails = new XMLHttpRequest();
-          starDetails.open("DELETE", "/playlist/starred/" + imgap.toString());
-	  starDetails.onreadystatechange = function (){
-              if (this.readyState == 4 && this.status == 200){
-		  starChange(False)
-              }
-          }
-          starDetails.send();
+        $.ajax({
+            url: "/playlist/starred/" + imgap.toString(),
+            type: 'DELETE',
+            success: function(result) {
+              starChange(result);
+            }
+        });
+
       }
+
+
       if(ac == 8){
-          //star
-          var starDetails = new XMLHttpRequest();
-          starDetails.open("SET", "/playlist/starred/" + imgap.toString());
-	  starDetails.onreadystatechange = function (){
-              if (this.readyState == 4 && this.status == 200){
-		  starChange(true)
-              }
-          }
-          starDetails.send();
+
+        $.ajax({
+        url: "/playlist/starred/" + imgap.toString(),
+            type: 'PUT',
+            success: function(result) {
+              starChange(result);
+            }
+        });
+
       }
+      
+
       if(ac == 9) {
-	  alert("You need an account to use this feature");
+	      alert("You need an account to use this feature");
       }
   }
 
+
+
+
   function starChange(starValue){
-    if(starValue == true){
-        document.getElementById("star").style.display = "none"();
-        document.getElementById("unstar").style.display = "inline"();
+    if(starValue == "True"){
+        document.getElementById("star").style.display = "none";
+        document.getElementById("unstar").style.display = "inline";
     }else{
-        document.getElementById("star").style.display = "inline"();
-        document.getElementById("unstar").style.display = "none"();
+        document.getElementById("star").style.display = "inline";
+        document.getElementById("unstar").style.display = "none";
 
     }
   }
@@ -192,6 +192,16 @@
       }
   }
 
+  function displayStar(imageNum){
+    $.ajax({
+        url: "/playlist/starred/" + imageNum.toString(),
+            type: 'GET',
+            success: function(result) {
+              starChange(result);
+            }
+        });
+
+  }
   function loadImage(imageNum) {
       $.getJSON("/image/get/" + imageNum.toString(), function(result, status) {
           setImage(result);
@@ -200,7 +210,6 @@
 
 function setImage(imagedef) {
     $("#myimg").attr("src", "/static/photos/" + imagedef.hash);
-    starChange(imagedef.star);
 }
 
 $( document ).ready(function() {
@@ -209,8 +218,9 @@ $( document ).ready(function() {
         time_set = parseInt(localStorage.getItem('timeSet'));
         //act(6);
     }
-    $.getJSON("/getimages", function(result, status) {
-	act(1);
+    $.getJSON("/image/get/0", function(result, status) {
+        loadImage(0);
+        displayStar(0);
     });
   });
 

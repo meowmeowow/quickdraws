@@ -20,14 +20,10 @@ import zipfile
 from datetime import datetime
 import json
 import requests
-# Create the Flask instance and pass the Flask 
-# constructor the path of the correct module
 
 main = Blueprint('main', __name__)
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-#main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
 class Session:
     def __init__(self, user_id):
         self.user_id = user_id
@@ -56,22 +52,30 @@ def index():
 @login_required
 def profile():
     #images = current_user.images
-    #form = PlaylistForm()
-    #if form.validate_on_submit():
-    #    flash('Playlist added successfully!')
-    #    return redirect(url_for('main.profile'))
-    #return render_template('profile.html', name=current_user.name, images=images, form=form)
-    return render_template('index.html')
+    playlist = models.Playlist.query.filter_by(user_id = current_user.id).filter_by(name = "uploaded").first()
+    images = playlist.getImagesFromPlaylist()
+    form = PlaylistForm()
+    if form.validate_on_submit():
+        flash('Playlist added successfully!')
+        return redirect(url_for('main.profile'))
+    return render_template('profile.html', name=current_user.name, images=images, form=form)
 
-@main.route('/playlist/<playlistName>')
+@main.route('/playlist')
 @login_required
-def playlist(playlistName):
-    #fix
+def playlist():
     #images = current_user.images
+    playlist = models.Playlist.query.filter_by(user_id = current_user.id).filter_by(name = "uploaded").first()
+    images = playlist.getImagesFromPlaylist()
 
-    #return render_template('playlist.html', name=current_user.name, images=images)
+    return render_template('playlist.html', name=current_user.name, images=images)
+
+'''
+@main.route("/playlist/<playlistname>/", methods=['GET'])
+@login_required
+def getImagesPlaylists(playlistName):
     return render_template('index.html')
 
+'''
 @main.route('/constraints')
 @login_required
 def constraints():
@@ -98,6 +102,7 @@ def upload_post():
         if file and allowed_file(file.filename):
             try:
                 file_content = file.read()
+                #resize here
                 if file.filename.endswith('.zip'):
                     with zipfile.ZipFile(file, 'r') as zip_ref:
                         for extracted_file in zip_ref.namelist():
@@ -105,13 +110,25 @@ def upload_post():
                             if extracted_file_content:
                                 image = models.newImage(extracted_file_content)
                                 image.user_id = current_user.id
-                                image.name = extracted_file
+                                image.name = file.filename
+                                
+                                open(image.filename(), 'wb').write(file_content)
+
+                                
                                 db.session.add(image)
+                                
+                                #uploaded_file(image.hash)
                 else:
                     image = models.newImage(file_content)
                     image.user_id = current_user.id
                     image.name = file.filename
+                    
+                    
+                    open(image.filename(), 'wb').write(file_content)
+
                     db.session.add(image)
+                    
+                    #uploaded_file(image.hash)
             except Exception as e:
                 db.session.rollback()
                 flash(f"Error uploading file {file.filename}: {str(e)}")
@@ -125,114 +142,72 @@ def upload_post():
         flash(f"Database error: {str(e)}")
 
     return redirect(request.url)
-'''  
-  file = request.files['file']
-  
-  if file.filename == '':
-    flash('No selected file')
-    return redirect(request.url)
-  
-  if file and allowed_file(file.filename):
-    body = file.read()
 
-    image = models.newImage(body)
-    image.user_id = current_user.id
-    image.name = file.filename
-    
-    db.session.add(image)
-    db.session.commit()
-    open(image.filename(), 'wb').write(body)
-
-    image.models.setInPlaylist(current_user.id,"uploaded")
-
-    
-    flash('Uploaded!')
-    return redirect(request.url)
-  
-  flash('Please try again, there was a problem')
-  return redirect(request.url)
-'''
-@main.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(main.config['UPLOAD_FOLDER'], filename)
 
 
 @main.route("/playlist/<playlistname>/<num>", methods=['GET'])
 def is_member_of_playlist(playlistname,num):
-    #get image by the hash and call starred function with user id?
-    
+    num = int(num)
+
+    print(num)
+
     session = getSession(current_user.id)
+    num = getImageNum(session.images,num)
     img = session.images[num]
     result = img.isInPlaylist(current_user.id,playlistname)
-    return(result)
+    return(str(result))
 
 @main.route("/playlist/<playlistname>/<num>", methods=['PUT'])
 def add_to_playlist(playlistname,num):
-    #handle request -> create new entry in playlistitem table
-
+    num = int(num)
     session = getSession(current_user.id)
+    num = getImageNum(session.images,num)
+
     img = session.images[num]
     img.setInPlaylist(current_user.id,playlistname)
-    return redirect('/playlist/<playlistname>')
+    return ("True")
 
 @main.route("/playlist/<playlistname>/<num>", methods=['DELETE'])
 def delete_from_playlist(playlistname,num):
-    #handle request -> delete playlistitem table
-    #javascript -> make calls
-    
+    num = int(num)
     session = getSession(current_user.id)
+    num = getImageNum(session.images,num)
+
     img = session.images[num]
     img.deleteInPlaylist(current_user.id,playlistname)
-    return redirect('/playlist/<playlistname>')
 
+    return ("False")
 
-@main.route("/playlist/<playlistname>/<num>", methods=['GET'])
-def is_member_of_playlist(playlistname,num):
-    #get image by the hash and call starred function with user id?
-    
-    session = getSession(current_user.id)
-    img = session.images[num]
-    result = img.isInPlaylist(current_user.id,playlistname)
-    return(result)
-
-@main.route("/playlist/<playlistname>/<num>", methods=['PUT'])
-def add_to_playlist(playlistname,num):
-    #handle request -> create new entry in playlistitem table
-
-    session = getSession(current_user.id)
-    img = session.images[num]
-    img.setInPlaylist(current_user.id,playlistname)
-    return redirect('/playlist/<playlistname>')
-
-@main.route("/playlist/<playlistname>/<num>", methods=['DELETE'])
-def delete_from_playlist(playlistname,num):
-    #handle request -> delete playlistitem table
-    #javascript -> make calls
-    
-    session = getSession(current_user.id)
-    img = session.images[num]
-    img.deleteInPlaylist(current_user.id,playlistname)
-    return redirect('/playlist/<playlistname>')
-
-@main.route("/getimages")
-def get_images():
-  #initalize images list, edit when faced with constrants
-  session = getSession(current_user.id)
-  session.images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
-  random.shuffle(session.images)
-
-  return ""
 
 @main.route("/image/get/<num>")
-def get_img(num):
+def get_img(num):   
+
     file_name = ""
 
+    start = int(num)
+
     session = getSession(current_user.id)
-    if not session.images: get_images()
+    if (not session.images) or (start == 0): 
+        session = getSession(current_user.id)
+        session.images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
+        random.shuffle(session.images) 
+
         
     images = session.images
-    print(len(images))
-    start = int(num)
+    
+    start = getImageNum(images,start)
+    
+    img = images[start]
+    imginfo = {}
+    imginfo['hash'] = str(img.hash)
+    imginfo['star'] = img.isInPlaylist(current_user.id, "starred")
+    imginfo = json.dumps(imginfo)
+
+    return imginfo
+
+def getImageNum(images,start):
+    if(start == 0):
+        return(0)
     if start < 0:
         rem = int((abs(start) + 1) % len(images))
         if rem == 0:
@@ -244,11 +219,4 @@ def get_img(num):
         if rem == 0:
             rem = len(images)
         start = rem - 1
-    img = images[start]
-    imginfo = {}
-    imginfo['hash'] = str(img.hash)
-    imginfo['star'] = img.isInPlaylist(current_user.id, "starred")
-    imginfo = json.dumps(imginfo)
-
-    return imginfo
-
+    return(start)
