@@ -111,12 +111,24 @@ def upload_post():
                                 image = models.newImage(extracted_file_content)
                                 image.user_id = current_user.id
                                 image.name = file.filename
+                                
+                                open(image.filename(), 'wb').write(file_content)
+
+                                
                                 db.session.add(image)
+                                
+                                #uploaded_file(image.hash)
                 else:
                     image = models.newImage(file_content)
                     image.user_id = current_user.id
                     image.name = file.filename
+                    
+                    
+                    open(image.filename(), 'wb').write(file_content)
+
                     db.session.add(image)
+                    
+                    #uploaded_file(image.hash)
             except Exception as e:
                 db.session.rollback()
                 flash(f"Error uploading file {file.filename}: {str(e)}")
@@ -131,9 +143,6 @@ def upload_post():
 
     return redirect(request.url)
 
-@main.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(main.config['UPLOAD_FOLDER'], filename)
 
 
 @main.route("/playlist/<playlistname>/<num>", methods=['GET'])

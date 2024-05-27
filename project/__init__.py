@@ -5,15 +5,7 @@ from flask_login import LoginManager
 db = SQLAlchemy()
 db.UPLOAD_FOLDER = './project/static/photos'
 db.PHOTOS_URI = './static/photos'
-'''
-class UserSession():
-    def __init__(self):
-        self.images = None
-        self.star_bool = False
-        self.start = 0
-        self.user_id = None
 
-'''
 def create_app():
     
     app = Flask(__name__)
