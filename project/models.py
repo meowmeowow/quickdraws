@@ -37,14 +37,16 @@ class Playlist(db.Model):
      user_id =  db.Column(db.Integer,db.ForeignKey('user.id'))
      created = db.Column(db.DateTime,default = datetime.now)
      playlistitems = db.relationship('PlaylistItem', backref='playlist', lazy=True)
-
+     
+     def getImagesFromPlaylist(self):
+        return(list(PlaylistItem.query.filter_by(playlist_id = self.id)))
 
 def newPlaylist(name,user_id):
-  playlist = Playlist(name = name, user_id = user_id) 
-  return playlist
+    playlist = Playlist(name = name, user_id = user_id)
+    return playlist
 
 
-     
+
 class PlaylistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     
@@ -55,8 +57,8 @@ class PlaylistItem(db.Model):
     created = db.Column(db.DateTime,default = datetime.now)
 
 def newPlaylistItem(playlist_id,image_id):
-  playlistitem = PlaylistItem(playlist_id = playlist_id, image_id = image_id)
-  return playlistitem
+    playlistitem = PlaylistItem(playlist_id = playlist_id, image_id = image_id)
+    return playlistitem
     
     
     
@@ -86,8 +88,11 @@ class Image(db.Model):
     def content(self):
         return open(self.filename(), "rb").read()
 
-    def setInPlaylist(self, user_id, playlistname):
-        playlist_item = newPlaylistItem(list(db.select(Playlist).where(Playlist.name == playlistname).where(Playlist.user_id == user_id)).scalars()[0].id,images[self.id])
+    def setInPlaylist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+        if not playlist: return
+
+        playlist_item = newPlaylistItem(playlist.id,self.id)
         db.session.add(playlist_item)
         db.session.commit()
 
@@ -95,8 +100,10 @@ class Image(db.Model):
     def deleteInPlaylist(self,user, playlistname):
        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
        if not playlist: return
-       db.session.execute(db.delete(db.select(PlaylistItem).where(PlaylistItem.image_id == self.id).where((db.select(Playlist).where(Playlist.id == playlist.id)))).first())
+       #db.session.execute(db.delete(PlaylistItem.query.filter_by(image_id = self.id).filter_by(playlist_id =playlist.id).first()))
+       db.session.execute(db.delete(PlaylistItem).where(PlaylistItem.image_id == self.id).where(PlaylistItem.playlist_id == playlist.id))
        db.session.commit()
+       print("safsdf")
 
     def isInPlaylist(self, user, playlistname):
         playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
