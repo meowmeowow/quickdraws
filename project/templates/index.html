@@ -63,8 +63,10 @@
 
   function newImage(imgap){
     images_seen++;
-    a = new timer(function() {  act(1);}, time_set);
-	  if(a) a.pause();
+    a = new timer(function() { 
+      if(a) a.pause();
+
+       act(1);}, time_set);
 	  loadImage(imgap);
 
   }
