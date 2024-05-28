@@ -74,7 +74,7 @@ class Image(db.Model):
     credit = db.Column(db.String)
     contentType = db.Column(db.String)
 
-    #playlist_image = db.relationship('Playlist_Image', backref='playlist_image', lazy=True)
+    playlist_image = db.relationship('PlaylistItem', backref='playlist_image', lazy=True)
 
     
     def __repr__(self):
