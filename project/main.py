@@ -45,6 +45,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @main.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
@@ -75,17 +76,27 @@ def playlist():
 
     return render_template('playlist.html', name=current_user.name, images=images)
 
-'''
-@main.route("/playlist/<playlistname>/", methods=['GET'])
-@login_required
-def getImagesPlaylists(playlistName):
-    return render_template('index.html')
 
-'''
 @main.route('/constraints')
 @login_required
 def constraints():
     return render_template('constraints.html')
+
+
+
+
+@main.route("/image/set/",methods=['GET','POST'])
+def setSessionImages():
+    session = getSession(current_user.id)
+    
+    qualifications = request.get_json()
+    # fetch images based on json info
+    
+
+
+    
+
+    
 
 @main.route('/upload', methods=['GET', 'POST'])
 @login_required
@@ -120,27 +131,37 @@ def upload_post():
                 flash('No selected file')
                 return redirect(request.url)
 
-            for file in files:
-                if file and allowed_file(file.filename):
-                    try:
-                        filename = secure_filename(file.filename)
-                        filepath = os.path.join(main.root_path, 'static/photos', filename)
-                        file.save(filepath)
-
-                        # Create and save the image entry
-                        image = Image(file_path=filename, user_id=current_user.id, name=filename)
-                        db.session.add(image)
-                        db.session.commit()
-
-                        # Add image to playlist
-                        playlist_item = PlaylistItem(playlist_id=playlist_id, image_id=image.id)
-                        db.session.add(playlist_item)
-                        db.session.commit()
-
-                    except Exception as e:
-                        db.session.rollback()
-                        flash(f"Error uploading file {file.filename}: {str(e)}")
-                        return redirect(request.url)
+    for file in files:
+        if file and allowed_file(file.filename):
+            try:
+                file_content = file.read()
+                #resize here
+                if file.filename.endswith('.zip'):
+                    with zipfile.ZipFile(file, 'r') as zip_ref:
+                        for extracted_file in zip_ref.namelist():
+                            extracted_file_content = zip_ref.read(extracted_file)
+                            if extracted_file_content:
+                                image = models.newImage(extracted_file_content)
+                                image.user_id = current_user.id
+                                image.name = file.filename
+                                
+                                open(image.filename(), 'wb').write(file_content)
+                                
+                                db.session.add(image)
+                                
+                                #uploaded_file(image.hash)
+                else:
+                    image = models.newImage(file_content)
+                    image.user_id = current_user.id
+                    image.name = file.filename
+                    open(image.filename(), 'wb').write(file_content)
+                    db.session.add(image)
+                    
+                    #uploaded_file(image.hash)
+            except Exception as e:
+                db.session.rollback()
+                flash(f"Error uploading file {file.filename}: {str(e)}")
+                return redirect(request.url)
 
             flash('Files uploaded successfully!')
             return redirect(url_for('main.profile'))
@@ -192,6 +213,7 @@ def get_img(num):
     session = getSession(current_user.id)
     if (not session.images) or (start == 0): 
         session = getSession(current_user.id)
+        #########change
         session.images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
         random.shuffle(session.images) 
 

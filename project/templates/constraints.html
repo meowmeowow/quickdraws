@@ -21,6 +21,58 @@
     </select>
   </div>
 
+<div>
+
+  <br>
+
+  <form>
+      <p>Include:</p>
+      <input type="radio" id="female" name="gender" value="female">
+      <label for="female">Female Read Models</label><br>
+    
+      <input type="radio" id="male" name="gender" value="male">
+      <label for="male">Male Read Models</label><br>
+
+      <input type="radio" id="non binary" name="gender" value="non binary">
+      <label for="non binary">Non Binary Read Models</label><br>
+
+  </form>
+  <br>
+
+  <form>
+    <p>Cover/Clothing:</p>
+    <input type="radio" id="all" name="cover" value="all">
+    <label for="all">All Models</label><br>
+  
+    <input type="radio" id="nude" name="cover" value="nude">
+    <label for="nude">Only Nude</label><br>
+
+    <input type="radio" id="clothed" name="cover" value="clothed">
+    <label for="clothed">Only Clothed</label><br>
+
+  </form>
+ <br>
+  <form>
+    <p>Age:</p>
+    <input type="checkbox" id="age" name="age" value="baby">
+    <label for="age">Baby</label><br>
+
+    <input type="checkbox" id="age" name="age" value="child">
+    <label for="age">Child</label><br>
+
+    <input type="checkbox" id="age" name="age" value="teen">
+    <label for="age">Teen</label><br>
+
+    <input type="checkbox" id="age" name="age" value="adult">
+    <label for="age">Adult</label><br><br>
+  </form>
+  <br>
+
+</div>
+
+
+
+  
 <button class="button" id="start" onclick="redirectAndStartTimer()" class style = "display: inline;">START</button>
 
 
@@ -42,59 +94,21 @@
     localStorage.setItem('timeSet', time_set);
 }
 
-  function act(ac) {
-      if(ac == 6) {
-	  //start
-
-	  document.getElementById("start").style.display = "none";
-	  document.getElementById("stop").style.display = "inline";
-	  document.getElementById("player").style.display = "inline";
-
-      
-	  a = new timer(function() {  act(1);}, time_set);
-      }
-  }
-
-
-  function timer(callback, delay) {
-      var id, started, remaining = delay, running
-
-      this.start = function() {
-          running = true
-          started = new Date()
-          id = setTimeout(callback, remaining)
-      }
-
-      this.pause = function() {
-          running = false
-          clearTimeout(id)
-          remaining -= new Date() - started
-      }
-
-      this.getTimeLeft = function() {
-          if (running) {
-              this.pause()
-              this.start()
-          }
-
-          return remaining
-      }
-
-      this.getStateRunning = function() {
-          return running
-      }
-
-      this.start()
-  }
-
-  function update_timer(){
-      if(a) {
-	  document.getElementById("time").innerHTML = "Time left:"+ parseInt(a.getTimeLeft()/1000); 
-      } else {
-	  document.getElementById("time").innerHTML = "";
-      }
-  }
-
+  function getImagesByQualification(){
+    var gender = document.getElementsByName('gender');
+    var cover  =  document.getElementsByName('cover');
+    var age = document.getElementsByName('age');
+    
+    $.ajax({
+            type: "POST",
+            url: "/image/set/",
+            contentType: 'project/json;charset=UTF-8',
+            data: JSON.stringify({'gender':  gender,'cover':cover,'age':age}),
+            success: function (data) {
+                console.log(data);
+            }
+     });
+}
 
 </script>   
 
