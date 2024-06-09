@@ -7,6 +7,36 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 import magic
 import hashlib
+    
+class ImageTag(UserMixin,db.Model):
+    id =  db.Column(db.Integer, primary_key=True)
+    image_id =  db.Column(db.Integer,db.ForeignKey('image.id'))
+    tag = db.Column(db.String(1000))
+    
+def getImagesFromTag(tags):
+    data = []
+    
+    for tag_t in tags:
+        images = list(ImageTag.query.filter_by(tag = tag_t))
+        if not images: return
+
+        for image in images:
+            for dat in data:
+                if(image.image_id != dat.image_id):
+                    data.append(image)
+
+        return(data)
+    if(tags.length == 0):
+        data = list(ImageTag.query.all())
+
+
+def newImageTag(image_id_t, tag_t):
+    new_imageTag = ImageTag(
+        image_id = image_id_t,
+        tag = tag_t
+    )
+    return(new_imageTag)
+
 
 class User(UserMixin,db.Model):
     id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
@@ -24,6 +54,11 @@ class User(UserMixin,db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
+    def get_playlists(self):
+        playlists = list(Playlist.query.filter_by(user_id = self.id))
+        if playlists:
+            return(playlists)
+        return False
 def newUser(name, email, password):
   new_user = User(email=email,
                   name=name,
@@ -75,6 +110,7 @@ class Image(db.Model):
     contentType = db.Column(db.String)
 
     playlist_image = db.relationship('PlaylistItem', backref='playlist_image', lazy=True)
+    image_tag = db.relationship('ImageTag', backref='image_tag', lazy=True)
 
     
     def __repr__(self):
@@ -113,6 +149,7 @@ class Image(db.Model):
             return playlist_item is not None
         else:
             return False
+    
         
         
         

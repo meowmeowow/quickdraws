@@ -45,6 +45,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @main.route('/')
+@login_required
 def index():
     return render_template('index.html')
 
@@ -75,17 +76,33 @@ def playlist():
 
     return render_template('playlist.html', name=current_user.name, images=images)
 
-'''
-@main.route("/playlist/<playlistname>/", methods=['GET'])
-@login_required
-def getImagesPlaylists(playlistName):
-    return render_template('index.html')
 
-'''
 @main.route('/constraints')
 @login_required
 def constraints():
     return render_template('constraints.html')
+
+
+
+
+@main.route("/image/set/",methods=['POST'])
+def setSessionImages():
+    
+
+    session = getSession(current_user.id)
+
+    qualifications = request.get_json()
+    print(qualifications)
+    # fetch images based on json info
+    session.images = models.getImagesFromTag(qualifications)
+    if (not session.images):
+        return('0')
+    return(str(len(session.images)))
+    
+
+    
+
+    
 
 @main.route('/upload', methods=['GET', 'POST'])
 @login_required
@@ -126,6 +143,8 @@ def upload_post():
                         filename = secure_filename(file.filename)
                         filepath = os.path.join(main.root_path, 'static/photos', filename)
                         file.save(filepath)
+                        open(image.filename(), 'wb').write(file.read()) # remove
+
 
                         # Create and save the image entry
                         image = Image(file_path=filename, user_id=current_user.id, name=filename)
@@ -147,7 +166,10 @@ def upload_post():
 
     # Ensure the form and playlists are passed to the template in GET and POST requests
     return render_template('upload.html', form=form, playlists=playlists)
-
+    
+@main.route("/playlist/get", methods=['GET'])
+def get_all_playlists():
+    return(jsonify({'playlists':models.current_user.get_playlists()}))
 @main.route("/playlist/<playlistname>/<num>", methods=['GET'])
 def is_member_of_playlist(playlistname,num):
     num = int(num)
@@ -192,7 +214,6 @@ def get_img(num):
     session = getSession(current_user.id)
     if (not session.images) or (start == 0): 
         session = getSession(current_user.id)
-        session.images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
         random.shuffle(session.images) 
 
         

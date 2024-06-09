@@ -21,80 +21,86 @@
     </select>
   </div>
 
+<div>
+
+  <br>
+
+  <form>
+      <p>Include:</p>
+      <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="female" name="gender" value="female">
+      <label for="female">Female Read Models</label><br>
+    
+      <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="male" name="gender" value="male">
+      <label for="male">Male Read Models</label><br>
+
+      <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="non binary" name="gender" value="non binary">
+      <label for="non binary">Non Binary Read Models</label><br>
+
+  </form>
+  <br>
+
+  <form>
+    <p>Cover/Clothing:</p>  
+    <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="nude" name="cover" value="nude">
+    <label for="nude">Nude</label><br>
+
+    <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="clothed" name="cover" value="clothed">
+    <label for="clothed">Clothed</label><br>
+
+  </form>
+ <br>
+  <form>
+    <p>Age:</p>
+    <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="baby" name="age" value="baby">
+    <label for="baby">Baby</label><br>
+
+    <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="child" name="age" value="child">
+    <label for="child">Child</label><br>
+
+    <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="teen" name="age" value="teen">
+    <label for="teen">Teen</label><br>
+
+    <input onclick = "javascript:getImagesByQualification()" type="checkbox" id="adult" name="age" value="adult">
+    <label for="adult">Adult</label><br><br>
+  </form>
+  <br>
+
+<span id="imageNum">
+
+</span>
+</div>
+
+
+
+  
 <button class="button" id="start" onclick="redirectAndStartTimer()" class style = "display: inline;">START</button>
 
 
 <script>
-  var a;
-  var time_set= 15000; //defaults to 15sec
-
-  setInterval(update_timer, 1000);
-
-  getInitialImage.send();
-
-  document.getElementById('timeForm').addEventListener('change', function() {
-      time_set = parseInt(this.value);
-  });
-
+var time_set= 15000;
   function redirectAndStartTimer() {
     window.location.href = "{{ url_for('main.index') }}";
     localStorage.setItem('startTimer', true);
     localStorage.setItem('timeSet', time_set);
 }
+  function getImagesByQualification(){
+    //redo id -> tag
+    var q = document.querySelectorAll('input:checked');
+    let qualifications = []
+    for(let i = 0; i < q.length;i++){
+      qualifications.push(q[i].value);
+    }
 
-  function act(ac) {
-      if(ac == 6) {
-	  //start
-
-	  document.getElementById("start").style.display = "none";
-	  document.getElementById("stop").style.display = "inline";
-	  document.getElementById("player").style.display = "inline";
-
-      
-	  a = new timer(function() {  act(1);}, time_set);
-      }
-  }
-
-
-  function timer(callback, delay) {
-      var id, started, remaining = delay, running
-
-      this.start = function() {
-          running = true
-          started = new Date()
-          id = setTimeout(callback, remaining)
-      }
-
-      this.pause = function() {
-          running = false
-          clearTimeout(id)
-          remaining -= new Date() - started
-      }
-
-      this.getTimeLeft = function() {
-          if (running) {
-              this.pause()
-              this.start()
-          }
-
-          return remaining
-      }
-
-      this.getStateRunning = function() {
-          return running
-      }
-
-      this.start()
-  }
-
-  function update_timer(){
-      if(a) {
-	  document.getElementById("time").innerHTML = "Time left:"+ parseInt(a.getTimeLeft()/1000); 
-      } else {
-	  document.getElementById("time").innerHTML = "";
-      }
-  }
-
+    $.ajax({
+            type: "POST",
+            url: "/image/set/",
+            contentType: 'application/json;charset=UTF-8',
+            data: JSON.stringify(qualifications),
+            success: function (data) {
+              $("#imageNum").html(data + " images")
+            }
+     });
+}
 
 </script>   
 

@@ -18,8 +18,14 @@
 
 
      {% if current_user.is_authenticated %}
-
      
+     <br>
+     <p>Add to playlists:</p>
+     <div id = "playlists">
+        
+     </div>
+     <br>
+
      <button  class="button" id="unstar" onclick='act(7)' class style = "display: none;" name = "star" value = "stared">✦</button>
 
      <button  class="button" id="star" onclick='act(8)' class style = "display: inline;"name = "star" value = "notstared">✧</button>
@@ -57,14 +63,31 @@
 
   setInterval(update_timer, 1000);
 
+
   document.getElementById('timeForm').addEventListener('change', function() {
       time_set = parseInt(this.value);
   });
 
+
+  function setPlaylists(){
+    let playlists = getPlaylists();
+  }
+  function getPlaylists(){
+    $.ajax({
+        url: "/playlist/get",
+            type: 'GET',
+            success: function(result) {
+              return(result);
+            }
+        });
+
+  }
   function newImage(imgap){
     images_seen++;
-    a = new timer(function() {  act(1);}, time_set);
-	  if(a) a.pause();
+    a = new timer(function() { 
+      if(a) a.pause();
+
+       act(1);}, time_set);
 	  loadImage(imgap);
 
   }
