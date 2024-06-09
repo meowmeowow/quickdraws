@@ -85,14 +85,20 @@ def constraints():
 
 
 
-@main.route("/image/set/",methods=['GET','POST'])
+@main.route("/image/set/",methods=['POST'])
 def setSessionImages():
-    session = getSession(current_user.id)
-    
-    qualifications = request.get_json()
-    # fetch images based on json info
     
 
+    session = getSession(current_user.id)
+
+    qualifications = request.get_json()
+    print(qualifications)
+    # fetch images based on json info
+    session.images = models.getImagesFromTag(qualifications)
+    if (not session.images):
+        return('0')
+    return(str(len(session.images)))
+    
 
     
 
@@ -131,44 +137,39 @@ def upload_post():
                 flash('No selected file')
                 return redirect(request.url)
 
-    for file in files:
-        if file and allowed_file(file.filename):
-            try:
-                file_content = file.read()
-                #resize here
-                if file.filename.endswith('.zip'):
-                    with zipfile.ZipFile(file, 'r') as zip_ref:
-                        for extracted_file in zip_ref.namelist():
-                            extracted_file_content = zip_ref.read(extracted_file)
-                            if extracted_file_content:
-                                image = models.newImage(extracted_file_content)
-                                image.user_id = current_user.id
-                                image.name = file.filename
-                                
-                                open(image.filename(), 'wb').write(file_content)
-                                
-                                db.session.add(image)
-                                
-                                #uploaded_file(image.hash)
-                else:
-                    image = models.newImage(file_content)
-                    image.user_id = current_user.id
-                    image.name = file.filename
-                    open(image.filename(), 'wb').write(file_content)
-                    db.session.add(image)
-                    
-                    #uploaded_file(image.hash)
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Error uploading file {file.filename}: {str(e)}")
-                return redirect(request.url)
+            for file in files:
+                if file and allowed_file(file.filename):
+                    try:
+                        filename = secure_filename(file.filename)
+                        filepath = os.path.join(main.root_path, 'static/photos', filename)
+                        file.save(filepath)
+                        open(image.filename(), 'wb').write(file.read()) # remove
+
+
+                        # Create and save the image entry
+                        image = Image(file_path=filename, user_id=current_user.id, name=filename)
+                        db.session.add(image)
+                        db.session.commit()
+
+                        # Add image to playlist
+                        playlist_item = PlaylistItem(playlist_id=playlist_id, image_id=image.id)
+                        db.session.add(playlist_item)
+                        db.session.commit()
+
+                    except Exception as e:
+                        db.session.rollback()
+                        flash(f"Error uploading file {file.filename}: {str(e)}")
+                        return redirect(request.url)
 
             flash('Files uploaded successfully!')
             return redirect(url_for('main.profile'))
 
     # Ensure the form and playlists are passed to the template in GET and POST requests
     return render_template('upload.html', form=form, playlists=playlists)
-
+    
+@main.route("/playlist/get", methods=['GET'])
+def get_all_playlists():
+    return(jsonify({'playlists':models.current_user.get_playlists()}))
 @main.route("/playlist/<playlistname>/<num>", methods=['GET'])
 def is_member_of_playlist(playlistname,num):
     num = int(num)
@@ -213,8 +214,6 @@ def get_img(num):
     session = getSession(current_user.id)
     if (not session.images) or (start == 0): 
         session = getSession(current_user.id)
-        #########change
-        session.images = list(db.session.execute(db.select(Image).order_by(Image.created)).scalars())
         random.shuffle(session.images) 
 
         
