@@ -11,11 +11,10 @@
 
 
   {% endwith %}
-
-<form method="POST" enctype="multipart/form-data">
-    {{ form.hidden_tag() }}
+  <form method = post enctype=multipart/form-data>
     <label for="files">Select image(s) or zip file(s):</label>
-    <input type="file" id="files" name="files" accept="image/*,.zip" multiple>
+    <input type="file" id="files" name="files" accept="image/*,.zip" multiple>  
+    <input type="submit" value="upload">
     
     <div class="form-group">
         <label for="playlistselect">Select a playlist:</label>
@@ -26,10 +25,5 @@
             {% endfor %}
         </select>
     </div>
-    
-    <div class="form-group">
-        <input type="submit" value="Upload" class="btn btn-primary">
-    </div>
-</form>
-
+  </form>
   {% endblock %}
