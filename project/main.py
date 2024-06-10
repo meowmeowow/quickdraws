@@ -53,11 +53,9 @@ def index():
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    playlist = models.Playlist.query.filter_by(user_id=current_user.id).filter_by(name="uploaded").first()
-    images = playlist.getImagesFromPlaylist() if playlist else []
     form = PlaylistForm()
     if form.validate_on_submit():
-        new_playlist = models.Playlist(
+        new_playlist = Playlist(
             name=form.name.data,
             user_id=current_user.id,
         )
@@ -65,8 +63,9 @@ def profile():
         db.session.commit()
         flash('Playlist added successfully!')
         return redirect(url_for('main.profile'))
-    playlists = models.Playlist.query.filter_by(user_id=current_user.id).all()
-    return render_template('profile.html', name=current_user.name, images=images, playlists=playlists, form=form)
+
+    playlists = Playlist.query.filter_by(user_id=current_user.id).all()
+    return render_template('profile.html', name=current_user.name, playlists=playlists, form=form)
 
 @main.route('/playlist')
 @login_required
@@ -100,68 +99,56 @@ def setSessionImages():
         return('0')
     return(str(len(session.images)))
 
-@main.route('/upload')
+@main.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload():
-    return render_template('upload.html')
+    form = UploadImageForm()
+    form.playlist.choices = populate_playlist_choices(current_user.id)
+    if form.validate_on_submit():
+        files = request.files.getlist('image')
+        playlist_id = form.playlist.data
+        if not files or all(f.filename == '' for f in files):
+            flash('No selected file')
+            return redirect(request.url)
 
-@main.route('/upload', methods=['POST'])
-@login_required
-def upload_post():
-    if 'files' not in request.files:
-        flash('No file part')
+        for file in files:
+            if file and allowed_file(file.filename):
+                try:
+                    file_content = file.read()
+                    if file.filename.endswith('.zip'):
+                        with zipfile.ZipFile(file, 'r') as zip_ref:
+                            for extracted_file in zip_ref.namelist():
+                                extracted_file_content = zip_ref.read(extracted_file)
+                                if extracted_file_content:
+                                    save_image_to_playlist(extracted_file_content, extracted_file, playlist_id)
+                    else:
+                        save_image_to_playlist(file_content, file.filename, playlist_id)
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f"Error uploading file {file.filename}: {str(e)}")
+                    return redirect(request.url)
+
+        try:
+            db.session.commit()
+            flash('Files uploaded successfully!')
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Database error: {str(e)}")
         return redirect(request.url)
 
-    files = request.files.getlist('files')
-    if not files or all(f.filename == '' for f in files):
-        flash('No selected file')
-        return redirect(request.url)
+    return render_template('upload.html', form=form)
 
-    for file in files:
-        if file and allowed_file(file.filename):
-            try:
-                file_content = file.read()
-                #resize here
-                if file.filename.endswith('.zip'):
-                    with zipfile.ZipFile(file, 'r') as zip_ref:
-                        for extracted_file in zip_ref.namelist():
-                            extracted_file_content = zip_ref.read(extracted_file)
-                            if extracted_file_content:
-                                image = models.newImage(extracted_file_content)
-                                image.user_id = current_user.id
-                                image.name = file.filename
-                                
-                                open(image.filename(), 'wb').write(file_content)
-
-                                
-                                db.session.add(image)
-                                
-                                #uploaded_file(image.hash)
-                else:
-                    image = models.newImage(file_content)
-                    image.user_id = current_user.id
-                    image.name = file.filename
-                    
-                    
-                    open(image.filename(), 'wb').write(file_content)
-
-                    db.session.add(image)
-                    
-                    #uploaded_file(image.hash)
-            except Exception as e:
-                db.session.rollback()
-                flash(f"Error uploading file {file.filename}: {str(e)}")
-                return redirect(request.url)
-
-    try:
-        db.session.commit()
-        flash('Files uploaded successfully!')
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Database error: {str(e)}")
-
-    return redirect(request.url)
-    
+def save_image_to_playlist(file_content, filename, playlist_id):
+    image = Image.new_image(file_content)
+    image.user_id = current_user.id
+    image.name = filename
+    db.session.add(image)
+    db.session.flush()  # Ensure the image is added and has an ID
+    playlist_item = PlaylistItem.new_playlist_item(playlist_id, image.id)
+    db.session.add(playlist_item)
+    with open(image.filename(), 'wb') as f:
+        f.write(file_content)
+        
 @main.route("/playlist/get", methods=['GET'])
 def get_all_playlists():
     return(jsonify({'playlists':models.current_user.get_playlists()}))

@@ -84,16 +84,13 @@ def newPlaylist(name,user_id):
 
 class PlaylistItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    
-    playlist_id =  db.Column(db.Integer,db.ForeignKey('playlist.id'))
+    playlist_id = db.Column(db.Integer, db.ForeignKey('playlist.id'))
+    image_id = db.Column(db.Integer, db.ForeignKey('image.id'))
+    created = db.Column(db.DateTime, default=datetime.now)
 
-    image_id =  db.Column(db.Integer,db.ForeignKey('image.id'))
-
-    created = db.Column(db.DateTime,default = datetime.now)
-
-def newPlaylistItem(playlist_id,image_id):
-    playlistitem = PlaylistItem(playlist_id = playlist_id, image_id = image_id)
-    return playlistitem
+    @staticmethod
+    def new_playlist_item(playlist_id, image_id):
+        return PlaylistItem(playlist_id=playlist_id, image_id=image_id)
     
     
     
@@ -108,62 +105,52 @@ class Image(db.Model):
     created = db.Column(db.DateTime, default=datetime.now)
     credit = db.Column(db.String)
     contentType = db.Column(db.String)
-
     playlist_image = db.relationship('PlaylistItem', backref='playlist_image', lazy=True)
     image_tag = db.relationship('ImageTag', backref='image_tag', lazy=True)
 
-    
     def __repr__(self):
-        return '<Image %s %r %s %s>' % (self.name, self.contentType, self.filename(), self.owner)
+        return f'<Image {self.name} {self.contentType} {self.filename()} {self.owner}>'
 
     def filename(self):
         return os.path.join(db.UPLOAD_FOLDER, self.hash)
+
     def uri(self):
         return os.path.join(db.PHOTOS_URI, self.hash)
 
     def content(self):
-        return open(self.filename(), "rb").read()
+        with open(self.filename(), "rb") as file:
+            return file.read()
 
-    def setInPlaylist(self, user, playlistname):
-        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
-        if not playlist: return
-
-        playlist_item = newPlaylistItem(playlist.id,self.id)
+    def set_in_playlist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id=user).filter_by(name=playlistname).first()
+        if not playlist:
+            return
+        playlist_item = PlaylistItem.new_playlist_item(playlist.id, self.id)
         db.session.add(playlist_item)
         db.session.commit()
 
+    def delete_in_playlist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id=user).filter_by(name=playlistname).first()
+        if not playlist:
+            return
+        PlaylistItem.query.filter_by(image_id=self.id, playlist_id=playlist.id).delete()
+        db.session.commit()
 
-    def deleteInPlaylist(self,user, playlistname):
-       playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
-       if not playlist: return
-       #db.session.execute(db.delete(PlaylistItem.query.filter_by(image_id = self.id).filter_by(playlist_id =playlist.id).first()))
-       db.session.execute(db.delete(PlaylistItem).where(PlaylistItem.image_id == self.id).where(PlaylistItem.playlist_id == playlist.id))
-       db.session.commit()
-       print("safsdf")
-
-    def isInPlaylist(self, user, playlistname):
-        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+    def is_in_playlist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id=user).filter_by(name=playlistname).first()
         if playlist:
-            playlist_item = PlaylistItem.query.filter_by(image_id = self.id).filter_by(playlist_id =playlist.id).first()
+            return PlaylistItem.query.filter_by(image_id=self.id, playlist_id=playlist.id).first() is not None
+        return False
 
-            return playlist_item is not None
-        else:
-            return False
-    
-        
-        
-        
-def newImage(body):
-    contenttype = magic.from_buffer(body, mime=True)
-    file_hash = hashlib.sha256(body).hexdigest()
-
-    image = Image(
-        hash=file_hash,
-        length = len(body),
-        contentType = contenttype 
-    )
-    
-    return image
+    @staticmethod
+    def new_image(body):
+        contenttype = magic.from_buffer(body, mime=True)
+        file_hash = hashlib.sha256(body).hexdigest()
+        return Image(
+            hash=file_hash,
+            length=len(body),
+            contentType=contenttype
+        )
     
         
 

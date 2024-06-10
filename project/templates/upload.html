@@ -1,29 +1,21 @@
-  {% extends "base.html" %}
+{% extends "base.html" %}
 
-  {% block content %}
-
+{% block content %}
   {% with messages = get_flashed_messages() %}
   {% if messages %}
       <div class="notification is-danger">
           {{ messages[0] }}
       </div>
   {% endif %}
-
-
   {% endwith %}
-  <form method = post enctype=multipart/form-data>
+  <form method="post" enctype="multipart/form-data" action="{{ url_for('main.upload') }}">
+    {{ form.hidden_tag() }}
     <label for="files">Select image(s) or zip file(s):</label>
-    <input type="file" id="files" name="files" accept="image/*,.zip" multiple>  
-    <input type="submit" value="upload">
-    
-    <div class="form-group">
-        <label for="playlistselect">Select a playlist:</label>
-        <select id="playlistselect" name="playlistselect" class="form-control">
-            <option value="">Select a playlist</option>
-            {% for playlist in playlists %}
-            <option value="{{ playlist.id }}">{{ playlist.name }}</option>
-            {% endfor %}
-        </select>
-    </div>
+    {{ form.image.label }}<br>
+    {{ form.image(class="form-control") }}<br>
+    <label for="playlistselect">Select a playlist:</label>
+    {{ form.playlist.label }}<br>
+    {{ form.playlist(class="form-control") }}<br>
+    {{ form.submit(class="btn btn-primary") }}
   </form>
-  {% endblock %}
+{% endblock %}
