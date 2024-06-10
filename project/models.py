@@ -116,32 +116,7 @@ class Image(db.Model):
 
     def uri(self):
         return os.path.join(db.PHOTOS_URI, self.hash)
-
-    def content(self):
-        with open(self.filename(), "rb") as file:
-            return file.read()
-
-    def set_in_playlist(self, user, playlistname):
-        playlist = Playlist.query.filter_by(user_id=user).filter_by(name=playlistname).first()
-        if not playlist:
-            return
-        playlist_item = PlaylistItem.new_playlist_item(playlist.id, self.id)
-        db.session.add(playlist_item)
-        db.session.commit()
-
-    def delete_in_playlist(self, user, playlistname):
-        playlist = Playlist.query.filter_by(user_id=user).filter_by(name=playlistname).first()
-        if not playlist:
-            return
-        PlaylistItem.query.filter_by(image_id=self.id, playlist_id=playlist.id).delete()
-        db.session.commit()
-
-    def is_in_playlist(self, user, playlistname):
-        playlist = Playlist.query.filter_by(user_id=user).filter_by(name=playlistname).first()
-        if playlist:
-            return PlaylistItem.query.filter_by(image_id=self.id, playlist_id=playlist.id).first() is not None
-        return False
-
+    
     @staticmethod
     def new_image(body):
         contenttype = magic.from_buffer(body, mime=True)

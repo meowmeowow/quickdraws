@@ -4,19 +4,15 @@ from flask_login import LoginManager
 
 db = SQLAlchemy()
 db.UPLOAD_FOLDER = './project/static/photos'
-db.PHOTOS_URI = './static/photos'
+db.PHOTOS_URI = '/static/photos'
 
 def create_app():
-    
     app = Flask(__name__)
 
-    
     app.config['SECRET_KEY'] = 'secret-key-goes-here'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
     app.config['MAX_CONTENT_LENGTH'] = 100 * 1000 * 1000
 
-    app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-    
     db.init_app(app)
 
     login_manager = LoginManager()
@@ -25,7 +21,6 @@ def create_app():
 
     from .models import User
 
-    
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
@@ -38,10 +33,7 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
-
-    from . import models
-
     with app.app_context():
         db.create_all()
-    
+
     return app

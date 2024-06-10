@@ -9,16 +9,16 @@
     <th style="width: 8em;">Type</th>
     <th style="width: 10em;">Created</th>
     <th style="width: 8em;">Size</th>
-    </tr>
-{% for image in images %}
-<tr>
-    <td><img src="{{image_uri()}}" width=100></td>
-    <td>{{image.name}}</td>
-    <td>{{image.contentType}}</td>
-    <td>{{image.created}}</td>
-    <td>{{image.length}}</td>
   </tr>
-{% endfor %}
+  {% for image in images %}
+  <tr>
+    <td><img src="{{ image.uri() }}" width=100></td>
+    <td>{{ image.name }}</td>
+    <td>{{ image.contentType }}</td>
+    <td>{{ image.created }}</td>
+    <td>{{ image.length }} bytes</td>
+  </tr>
+  {% endfor %}
 </table>
 
 {% endblock %}

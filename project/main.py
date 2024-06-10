@@ -67,14 +67,12 @@ def profile():
     playlists = Playlist.query.filter_by(user_id=current_user.id).all()
     return render_template('profile.html', name=current_user.name, playlists=playlists, form=form)
 
-@main.route('/playlist')
+@main.route('/playlist/<int:playlist_id>', methods=['GET'])
 @login_required
-def playlist():
-    #images = current_user.images
-    playlist = models.Playlist.query.filter_by(user_id = current_user.id).filter_by(name = "uploaded").first()
-    images = playlist.getImagesFromPlaylist()
-
-    return render_template('playlist.html', name=current_user.name, images=images)
+def playlist(playlist_id):
+    playlist = Playlist.query.get_or_404(playlist_id)
+    images = [item.playlist_image for item in playlist.playlistitems]
+    return render_template('playlist.html', playlist=playlist, images=images)
 
 
 @main.route('/constraints')
