@@ -78,6 +78,7 @@
 
 <script>
 var time_set= 15000;
+getImagesByQualification();
   function redirectAndStartTimer() {
     window.location.href = "{{ url_for('main.index') }}";
     localStorage.setItem('startTimer', true);

@@ -25,9 +25,10 @@ def getImagesFromTag(tags):
                 if(image.image_id != dat.image_id):
                     data.append(image)
 
-        return(data)
-    if(tags.length == 0):
-        data = list(ImageTag.query.all())
+    if(len(tags) == 0):
+        data = list(Image.query.all()) # change to imagetag-> when uploading add tags
+    return(data)
+
 
 
 def newImageTag(image_id_t, tag_t):
@@ -89,7 +90,7 @@ class PlaylistItem(db.Model):
     created = db.Column(db.DateTime, default=datetime.now)
 
     @staticmethod
-    def new_playlist_item(playlist_id, image_id):
+    def newPlaylistItem(playlist_id, image_id):
         return PlaylistItem(playlist_id=playlist_id, image_id=image_id)
     
     
@@ -116,9 +117,29 @@ class Image(db.Model):
 
     def uri(self):
         return os.path.join(db.PHOTOS_URI, self.hash)
-    
+    def isInPlaylist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+        if playlist:
+            playlist_item = PlaylistItem.query.filter_by(image_id = self.id).filter_by(playlist_id =playlist.id).first()
+
+            return playlist_item is not None
+        else:
+            return False
+    def setInPlaylist(self, user, playlistname):
+        playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+        if not playlist: return
+
+        playlist_item = PlaylistItem.newPlaylistItem(playlist.id,self.id)
+        db.session.add(playlist_item)
+        db.session.commit()
+    def deleteInPlaylist(self,user, playlistname):
+       playlist = Playlist.query.filter_by(user_id = user).filter_by(name = playlistname).first()
+       if not playlist: return
+       #db.session.execute(db.delete(PlaylistItem.query.filter_by(image_id = self.id).filter_by(playlist_id =playlist.id).first()))
+       db.session.execute(db.delete(PlaylistItem).where(PlaylistItem.image_id == self.id).where(PlaylistItem.playlist_id == playlist.id))
+       db.session.commit()
     @staticmethod
-    def new_image(body):
+    def new_image( body):
         contenttype = magic.from_buffer(body, mime=True)
         file_hash = hashlib.sha256(body).hexdigest()
         return Image(

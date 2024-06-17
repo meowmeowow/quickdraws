@@ -20,7 +20,6 @@ import zipfile
 from datetime import datetime
 import json
 import requests
-import jsonify
 
 main = Blueprint('main', __name__)
 
@@ -90,11 +89,12 @@ def setSessionImages():
     session = getSession(current_user.id)
 
     qualifications = request.get_json()
-    print(qualifications)
+
     # fetch images based on json info
     session.images = models.getImagesFromTag(qualifications)
     if (not session.images):
         return('0')
+    
     return(str(len(session.images)))
 
 @main.route('/upload', methods=['GET', 'POST'])
@@ -142,14 +142,19 @@ def save_image_to_playlist(file_content, filename, playlist_id):
     image.name = filename
     db.session.add(image)
     db.session.flush()  # Ensure the image is added and has an ID
-    playlist_item = PlaylistItem.new_playlist_item(playlist_id, image.id)
+    playlist_item = PlaylistItem.newPlaylistItem(playlist_id, image.id)
     db.session.add(playlist_item)
     with open(image.filename(), 'wb') as f:
         f.write(file_content)
         
 @main.route("/playlist/get", methods=['GET'])
 def get_all_playlists():
-    return(jsonify({'playlists':models.current_user.get_playlists()}))
+    playlists = models.current_user.get_playlists()
+    playlist = [i.name for i in playlists]
+
+    playlist = json.dumps(playlist)
+    return(playlist)
+
 @main.route("/playlist/<playlistname>/<num>", methods=['GET'])
 def is_member_of_playlist(playlistname,num):
     num = int(num)
