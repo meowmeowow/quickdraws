@@ -66,13 +66,6 @@ def profile():
     playlists = Playlist.query.filter_by(user_id=current_user.id).all()
     return render_template('profile.html', name=current_user.name, playlists=playlists, form=form)
 
-@main.route('/playlist/<int:playlist_id>', methods=['GET'])
-@login_required
-def playlist(playlist_id):
-    playlist = Playlist.query.get_or_404(playlist_id)
-    images = [item.playlist_image for item in playlist.playlistitems]
-    return render_template('playlist.html', playlist=playlist, images=images)
-
 
 @main.route('/constraints')
 @login_required
@@ -149,7 +142,8 @@ def save_image_to_playlist(file_content, filename, playlist_id):
         
 @main.route("/playlist/get", methods=['GET'])
 def get_all_playlists():
-    playlists = models.current_user.get_playlists()
+
+    playlists = current_user.get_playlists()
     playlist = [i.name for i in playlists]
 
     playlist = json.dumps(playlist)
@@ -187,6 +181,13 @@ def delete_from_playlist(playlistname,num):
     img.deleteInPlaylist(current_user.id,playlistname)
 
     return ("False")
+
+@main.route('/playlist/<int:playlist_id>', methods=['GET'])
+@login_required
+def playlist(playlist_id):
+    playlist = Playlist.query.get_or_404(playlist_id)
+    images = [item.playlist_image for item in playlist.playlistitems]
+    return render_template('playlist.html', playlist=playlist, images=images)
 
 
 @main.route("/image/get/<num>")

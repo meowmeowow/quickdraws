@@ -26,15 +26,8 @@
      </div>
      <br>
 
-     <button  class="button" id="unstar" onclick='act(7)' class style = "display: none;" name = "star" value = "stared">✦</button>
-
-     <button  class="button" id="star" onclick='act(8)' class style = "display: inline;"name = "star" value = "notstared">✧</button>
    {% endif %}
 
-
-   {% if not current_user.is_authenticated %}
-   <button  class="button" id="star" onclick="act(9)" class style = "display: inline;" name = "star" value = "notstared">✧</button>
-   {% endif %}
 
 </div>
 
@@ -69,13 +62,16 @@
   });
 
 
-  function setPlaylists(){
+  function setPlaylists(imgap){
     let playlists = getPlaylists();
     for(let i = 0; i < playlists.length; i++){
-      $('#playlists').prepend('<button class = "button" onclick="">'+playlists[i]+'</button>');
+      let playlist = playlists[i]
+      let inPlaylist = getImageInPlaylist(imgap,playlist)
+      $('#playlists').prepend('<button class = "button">'+playlist+inPlaylist+'</button>');
 
     }
   }
+  //get all users playlists to display, indicate if image already in playlist
   function getPlaylists(){
     $.ajax({
         url: "/playlist/get",
@@ -86,6 +82,18 @@
         });
 
   }
+  function getImageInPlaylist(imageNum, playlistName){
+    $.ajax({
+        url: "/playlist/"+playlistName+"/" + imageNum.toString(),
+            type: 'GET',
+            success: function(result) {
+              return(result);
+            }
+        });
+
+  }
+
+
   function newImage(imgap){
     images_seen++;
     a = new timer(function() { 
@@ -100,13 +108,13 @@
         //forwards
 	      imgap += 1;
         newImage(imgap)
-        displayStar(imgap)
+        setPlaylists(imgap)
       }
       if (ac == 2){
         //backwards
 	      imgap += -1;
         newImage(imgap)
-        displayStar(imgap)
+        setPlaylists(imgap)
       }
 
       if(ac == 3){
@@ -169,16 +177,6 @@
 
 
 
-  function starChange(starValue){
-    if(starValue == "True"){
-        document.getElementById("star").style.display = "none";
-        document.getElementById("unstar").style.display = "inline";
-    }else{
-        document.getElementById("star").style.display = "inline";
-        document.getElementById("unstar").style.display = "none";
-
-    }
-  }
 
   function timer(callback, delay) {
       var id, started, remaining = delay, running
@@ -219,16 +217,7 @@
       }
   }
 
-  function displayStar(imageNum){
-    $.ajax({
-        url: "/playlist/starred/" + imageNum.toString(),
-            type: 'GET',
-            success: function(result) {
-              starChange(result);
-            }
-        });
 
-  }
   function loadImage(imageNum) {
       $.getJSON("/image/get/" + imageNum.toString(), function(result, status) {
           setImage(result);
@@ -247,7 +236,7 @@ $( document ).ready(function() {
     }
     $.getJSON("/image/get/0", function(result, status) {
         loadImage(0);
-        displayStar(0);
+        setPlaylists(0);
     });
   });
 
