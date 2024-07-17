@@ -8,6 +8,9 @@
       </div>
   {% endif %}
   {% endwith %}
+  <div dir='rtl'>
+    <input name='rtl-example' class='tagify tagify--rtl-example' placeholder='Add Tags'/>
+  </div>
   <form method="post" enctype="multipart/form-data" action="{{ url_for('main.upload') }}">
     {{ form.hidden_tag() }}
     <label for="files">Select image(s) or zip file(s):</label>

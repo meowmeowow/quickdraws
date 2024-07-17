@@ -1,18 +1,23 @@
 {
   "name": "quickdraws",
   "version": "1.0.0",
-  "description": "To activate the virtual environment:",
-  "main": "tailwind.config.js",
+  "description": "Lifedrawing site",
+  "main": "base.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i project/static/styles.css -o project/static/output.css --watch"
-
+    "start": "parcel index.html --open",
+    "build": "parcel build index.html"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "tailwindcss": "^3.4.3"
-  }
+    "@yaireo/tagify": "3.21.4",
+    "node-sass": "5.0.0"
+  },
+  "devDependencies": {
+    "@babel/core": "7.2.0",
+    "parcel-bundler": "^1.12.4"
+  },
+  "keywords": [
+    "tagify",
+    "tags"
+  ]
 }
 

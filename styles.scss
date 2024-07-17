@@ -1,6 +1,8 @@
 @import "@yaireo/tagify/src/tagify.css";
+
 .tagify__dropdown--rtl-example {
   max-width: none !important;
+  visibility: visible !important;
 }
 
 /* each suggestion item in the dropdown should be rendered as a single line of text */
@@ -18,4 +20,3 @@
   min-width: 300px;
 }
 
-/*# sourceMappingURL=output.css.map */
