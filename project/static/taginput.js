@@ -1,6 +1,3 @@
-import Tagify from '@yaireo/tagify'
-import './styles.scss' 
-
 document.addEventListener("DOMContentLoaded", function() {
     var input = document.querySelector('input[name=rtl-example]');
 

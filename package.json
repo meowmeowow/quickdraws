@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "Lifedrawing site",
   "main": "base.html",
+  "type": "module",
+
   "scripts": {
     "start": "parcel index.html --open",
     "build": "parcel build index.html"
@@ -11,6 +13,7 @@
     "@yaireo/tagify": "3.21.4",
     "node-sass": "5.0.0"
   },
+  
   "devDependencies": {
     "@babel/core": "7.2.0",
     "parcel-bundler": "^1.12.4"
