@@ -1,7 +1,5 @@
 
-To activate the virtual environment:
-
-  source venv/bin/activate
+Quickdraws is a full-stack web application for artists to enhance observational drawing skills.
 
 To start the server:
 
@@ -12,8 +10,4 @@ To view the server:
   http://35.167.74.108/
 
 
-To install a new python package:
-
-  pip3 install requests
-  echo requests >> requirements
 
